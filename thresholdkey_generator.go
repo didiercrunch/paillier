@@ -4,8 +4,6 @@ import (
 	"crypto/rand"
 	"io"
 	"math/big"
-
-	"bitbucket.org/ustraca/crypto"
 )
 
 type ThresholdKeyGenerator struct {
@@ -48,7 +46,7 @@ func GetThresholdKeyGenerator(nbits, TotalNumberOfDecryptionServers, Threshold i
 }
 
 func (this *ThresholdKeyGenerator) GenerateSafePrimes() (*big.Int, *big.Int, error) {
-	return crypto.GenerateSafePrimes(this.nbits, this.Random)
+	return GenerateSafePrimes(this.nbits, this.Random)
 }
 
 func (this *ThresholdKeyGenerator) InitPandP1() error {
@@ -99,7 +97,7 @@ func (this *ThresholdKeyGenerator) InitPsAndQs() error {
 
 func (this *ThresholdKeyGenerator) ComputeV() error {
 	var err error
-	this.v, err = crypto.GetRandomGeneratorOfTheQuadraticResidue(this.nSquare, this.Random)
+	this.v, err = GetRandomGeneratorOfTheQuadraticResidue(this.nSquare, this.Random)
 	return err
 }
 
@@ -152,7 +150,7 @@ func (this *ThresholdKeyGenerator) CreateShares() []*big.Int {
 }
 
 func (this *ThresholdKeyGenerator) Delta() *big.Int {
-	return crypto.Factorial(this.TotalNumberOfDecryptionServers)
+	return Factorial(this.TotalNumberOfDecryptionServers)
 }
 
 func (this *ThresholdKeyGenerator) CreateViArray(shares []*big.Int) (viArray []*big.Int) {

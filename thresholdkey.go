@@ -6,8 +6,6 @@ import (
 	"errors"
 	"io"
 	"math/big"
-
-	"bitbucket.org/ustraca/crypto"
 )
 
 type ThresholdKey struct {
@@ -26,7 +24,7 @@ func (this *ThresholdKey) CombineSharesConstant() *big.Int {
 
 // returns the factorial of the number of TotalNumberOfDecryptionServers
 func (this *ThresholdKey) Delta() *big.Int {
-	return crypto.Factorial(this.TotalNumberOfDecryptionServers)
+	return Factorial(this.TotalNumberOfDecryptionServers)
 }
 
 func (this *ThresholdKey) MakeVerificationBeforeCombiningPartialDecryptions(shares []*PartialDecryption) error {

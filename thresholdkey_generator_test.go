@@ -11,24 +11,6 @@ var MockGenerateSafePrimes = func() (*big.Int, *big.Int, error) {
 	return big.NewInt(887), big.NewInt(443), nil
 }
 
-func AreSafePrimes(p, q *big.Int, expectedLength int, t *testing.T) {
-	if l := p.BitLen(); l != expectedLength {
-		t.Error("p does not have the good length. ", l)
-	}
-	if l := q.BitLen(); l != expectedLength-1 {
-		t.Error("q does not have the good length. ", l)
-	}
-	if !p.ProbablyPrime(100) {
-		t.Error("p is not a probable prime :(")
-	}
-	if !q.ProbablyPrime(100) {
-		t.Error("q is not a probable prime :(")
-	}
-	if p.Int64() != 2*q.Int64()+1 {
-		t.Error("p does not equals 2 * q + 1")
-	}
-}
-
 func TestGenerateSafePrimesOfThresholdKeyGenerator(t *testing.T) {
 	tkh := new(ThresholdKeyGenerator)
 	tkh.nbits = 10

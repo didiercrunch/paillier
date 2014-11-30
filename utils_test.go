@@ -51,5 +51,65 @@ func TestGetRandomNumberInMultiplicativeGroup(t *testing.T) {
 			t.Fail()
 		}
 	}
+}
+
+func TestFactorial(t *testing.T) {
+	if delta := Factorial(6); 720 != delta.Int64() {
+		t.Error("Delta is not 720 but", delta)
+	}
+}
+
+func AreSafePrimes(p, q *big.Int, expectedLength int, t *testing.T) {
+	if l := p.BitLen(); l != expectedLength {
+		t.Error("p does not have the good length. ", l)
+	}
+	if l := q.BitLen(); l != expectedLength-1 {
+		t.Error("q does not have the good length. ", l)
+	}
+	if !p.ProbablyPrime(100) {
+		t.Error("p is not a probable prime :(")
+	}
+	if !q.ProbablyPrime(100) {
+		t.Error("q is not a probable prime :(")
+	}
+	if p.Int64() != 2*q.Int64()+1 {
+		t.Error("p does not equals 2 * q + 1")
+	}
+}
+
+func GetEntireRQn(n int) map[int]bool {
+	ret := make(map[int]bool)
+	for i := 1; i < n; i++ {
+		if areRelativelyPrime(i, n) {
+			ret[i] = true
+		}
+	}
+	return ret
+}
+
+func TestGenerateSafePrimes(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		p, q, err := GenerateSafePrimes(20, rand.Reader)
+		if err != nil {
+			t.Error(err)
+		}
+		AreSafePrimes(p, q, 20, t)
+	}
+}
+
+func TestGetRandomGeneratorOfTheQuadraticResidue(t *testing.T) {
+	tooSmallPrime1, tooSmallPrime2 := b(347), b(359)
+	m := new(big.Int).Mul(tooSmallPrime1, tooSmallPrime2)
+	RQn := GetEntireRQn(n(m))
+	for i := 0; i < 100; i++ {
+		elm, err := GetRandomGeneratorOfTheQuadraticResidue(m, rand.Reader)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if _, ok := RQn[n(elm)]; !ok {
+			t.Fail()
+		}
+	}
 
 }
