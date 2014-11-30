@@ -2,6 +2,10 @@
 
 Go implementation of the paillier cryptosystem and threshold paillier crytposystem.
 
+
+[![travis](https://travis-ci.org/didiercrunch/paillier.svg)](https://travis-ci.org/didiercrunch/paillier/)
+
+
 #### introduction
 
 Implementation of the paillier cryptosystem.  See
