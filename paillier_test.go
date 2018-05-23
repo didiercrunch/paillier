@@ -8,10 +8,11 @@ import (
 )
 
 func TestLCM(t *testing.T) {
-	a := big.NewInt(2 * 3 * 3 * 3 * 5 * 5)
-	b := big.NewInt(3 * 3 * 5 * 5 * 57 * 11)
-	exp := big.NewInt(3 * 3 * 5 * 5)
-	if reflect.DeepEqual(exp, LCM(a, b)) {
+	a := big.NewInt(1350)
+	b := big.NewInt(141075)
+	expected := big.NewInt(282150)
+
+	if !reflect.DeepEqual(expected, LCM(a, b)) {
 		t.Fail()
 	}
 }
@@ -35,7 +36,7 @@ func TestComputeMu(t *testing.T) {
 
 	exp := big.NewInt(3)
 	if !reflect.DeepEqual(computeMu(g, lambda, n), exp) {
-		t.Error("lambda is not well computed")
+		t.Error("mu is not well computed")
 	}
 }
 
