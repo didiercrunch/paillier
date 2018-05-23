@@ -40,6 +40,16 @@ func TestComputeMu(t *testing.T) {
 	}
 }
 
+func TestComputeLambda(t *testing.T) {
+	a := big.NewInt(5)
+	b := big.NewInt(7)
+	expected := big.NewInt(12)
+
+	if !reflect.DeepEqual(expected, computeLamda(a, b)) {
+		t.Error("lambda is not correctly computed")
+	}
+}
+
 func TestEncryptDecryptSmall(t *testing.T) {
 	p := big.NewInt(13)
 	q := big.NewInt(11)
