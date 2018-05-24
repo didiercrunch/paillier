@@ -8,7 +8,6 @@ import (
 
 type PublicKey struct {
 	N, G *big.Int // usually G is set to N+1
-	n2   *big.Int // the cache value of N^2
 }
 
 func (this *PublicKey) GetBSON() (interface{}, error) {
@@ -19,11 +18,7 @@ func (this *PublicKey) GetBSON() (interface{}, error) {
 }
 
 func (this *PublicKey) GetNSquare() *big.Int {
-	if this.n2 != nil {
-		return this.n2
-	}
-	this.n2 = new(big.Int).Mul(this.N, this.N)
-	return this.n2
+	return new(big.Int).Mul(this.N, this.N)
 }
 
 // Encode a plaintext in a cypher one. The plain text must be smaller that
