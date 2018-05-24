@@ -55,12 +55,6 @@ type PrivateKey struct {
 	Lambda *big.Int
 }
 
-func (this *PrivateKey) String() string {
-	ret := fmt.Sprintf("n     :  %x", this.N)
-	ret += fmt.Sprintf("lambda:  %x", this.Lambda)
-	return ret
-}
-
 // Decodes ciphertext into a plaintext message.
 //
 // c - cyphertext to decrypt
