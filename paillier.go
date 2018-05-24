@@ -7,12 +7,11 @@ import (
 )
 
 type PublicKey struct {
-	N, G *big.Int // usually G is set to N+1
+	N *big.Int // usually G is set to N+1
 }
 
 func (this *PublicKey) GetBSON() (interface{}, error) {
 	m := make(map[string]string)
-	m["g"] = fmt.Sprintf("%x", this.G)
 	m["n"] = fmt.Sprintf("%x", this.N)
 	return m, nil
 }
@@ -57,8 +56,7 @@ type PrivateKey struct {
 }
 
 func (this *PrivateKey) String() string {
-	ret := fmt.Sprintf("g     :  %x", this.G)
-	ret += fmt.Sprintf("n     :  %x", this.N)
+	ret := fmt.Sprintf("n     :  %x", this.N)
 	ret += fmt.Sprintf("lambda:  %x", this.Lambda)
 	return ret
 }

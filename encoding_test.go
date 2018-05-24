@@ -118,6 +118,6 @@ func TestPartialDecryptionZKPBSONification(t *testing.T) {
 }
 
 func TestThresholdKeyBSON(t *testing.T) {
-	key := &ThresholdKey{PublicKey{b(9), b(8)}, 7, 6, b(3), []*big.Int{b(2), b(34)}}
+	key := &ThresholdKey{PublicKey{b(9)}, 7, 6, b(3), []*big.Int{b(2), b(34)}, b(8)}
 	AssertBSONIsGood(key, new(ThresholdKey), t)
 }
