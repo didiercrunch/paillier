@@ -26,9 +26,14 @@ func (this *PublicKey) GetNSquare() *big.Int {
 	return this.n2
 }
 
-// Encode a plain text in a cypher one.  The plain text must be smaller that
-// N and bigger or equal than zero.  random is usually rand.Reader from the
+// Encode a plaintext in a cypher one. The plain text must be smaller that
+// N and bigger or equal than zero. random is usually rand.Reader from the
 // package crypto/rand.
+//
+// m - plaintext to encrypt
+// E(m, r) = [(1 + N) r^N] mod N^2
+//
+// See [KL 08] construction 11.32, page 414.
 //
 // Returns an error if an error has be returned by io.Reader.
 func (pub *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
@@ -38,7 +43,8 @@ func (pub *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
 	}
 	nSquare := pub.GetNSquare()
 
-	gm := new(big.Int).Exp(pub.G, m, nSquare)
+	g := new(big.Int).Add(pub.N, big.NewInt(1))
+	gm := new(big.Int).Exp(g, m, nSquare)
 	rn := new(big.Int).Exp(r, pub.N, nSquare)
 	return &Cypher{new(big.Int).Mod(new(big.Int).Mul(rn, gm), nSquare)}, nil
 }
@@ -52,20 +58,28 @@ func (this *PublicKey) Add(cypher1, cypher2 *Cypher) *Cypher {
 
 type PrivateKey struct {
 	PublicKey
-	Lambda, Mu *big.Int
+	Lambda *big.Int
 }
 
 func (this *PrivateKey) String() string {
 	ret := fmt.Sprintf("g     :  %x", this.G)
 	ret += fmt.Sprintf("n     :  %x", this.N)
 	ret += fmt.Sprintf("lambda:  %x", this.Lambda)
-	ret += fmt.Sprintf("mu    :  %x", this.Mu)
 	return ret
 }
 
+// Decodes ciphertext into a plaintext message.
+//
+// c - cyphertext to decrypt
+// N, lambda - key attributes
+//
+// D(c) = [ ((c^lambda) mod N^2) - 1) / N ] lambda^-1 mod N
+//
+// See [KL 08] construction 11.32, page 414.
 func (priv *PrivateKey) Decrypt(cypher *Cypher) (msg *big.Int) {
+	mu := new(big.Int).ModInverse(priv.Lambda, priv.N)
 	tmp := new(big.Int).Exp(cypher.C, priv.Lambda, priv.GetNSquare())
-	msg = new(big.Int).Mod(new(big.Int).Mul(L(tmp, priv.N), priv.Mu), priv.N)
+	msg = new(big.Int).Mod(new(big.Int).Mul(L(tmp, priv.N), mu), priv.N)
 	return
 }
 
@@ -82,35 +96,38 @@ func L(u, n *big.Int) *big.Int {
 	return new(big.Int).Div(t, n)
 }
 
-func LCM(x, y *big.Int) *big.Int {
-	return new(big.Int).Mul(new(big.Int).Div(x, new(big.Int).GCD(nil, nil, x, y)), y)
-}
-
 func minusOne(x *big.Int) *big.Int {
 	return new(big.Int).Add(x, big.NewInt(-1))
 }
 
-func computeMu(g, lambda, n *big.Int) *big.Int {
-	n2 := new(big.Int).Mul(n, n)
-	u := new(big.Int).Exp(g, lambda, n2)
-	return new(big.Int).ModInverse(L(u, n), n)
+func computePhi(p, q *big.Int) *big.Int {
+	return new(big.Int).Mul(minusOne(p), minusOne(q))
 }
 
-func computeLamda(p, q *big.Int) *big.Int {
-	return LCM(minusOne(p), minusOne(q))
-}
-
+// CreatePrivateKey generates a Paillier private key accepting two large prime
+// numbers of equal length or other such that gcd(pq, (p-1)(q-1)) = 1.
+//
+// Algorithm is based on approach described in [KL 08], construction 11.32,
+// page 414 which is compatible with one described in [DJN 10], section 3.2
+// except that instead of generating Lambda private key component from LCM
+// of p and q we use Euler's totient function as suggested in [KL 08].
+//
+//     [KL 08]:  Jonathan Katz, Yehuda Lindell, (2008)
+//               Introduction to Modern Cryptography: Principles and Protocols,
+//               Chapman & Hall/CRC
+//
+//     [DJN 10]: Ivan Damgard, Mads Jurik, Jesper Buus Nielsen, (2010)
+//               A Generalization of Paillier’s Public-Key System
+//               with Applications to Electronic Voting
+//               Aarhus University, Dept. of Computer Science, BRICS
 func CreatePrivateKey(p, q *big.Int) *PrivateKey {
 	n := new(big.Int).Mul(p, q)
-	lambda := new(big.Int).Mul(minusOne(p), minusOne(q))
-	g := new(big.Int).Add(n, big.NewInt(1))
-	mu := new(big.Int).ModInverse(lambda, n)
+	lambda := computePhi(p, q)
+
 	return &PrivateKey{
 		PublicKey: PublicKey{
 			N: n,
-			G: g,
 		},
 		Lambda: lambda,
-		Mu:     mu,
 	}
 }
