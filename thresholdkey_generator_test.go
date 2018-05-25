@@ -18,10 +18,8 @@ func TestGenerateSafePrimesOfThresholdKeyGenerator(t *testing.T) {
 	p, q, err := tkh.generateSafePrimes()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	AreSafePrimes(p, q, 10, t)
-
 }
 
 func TestInitPandP1(t *testing.T) {
@@ -31,7 +29,6 @@ func TestInitPandP1(t *testing.T) {
 
 	tkh.initPandP1()
 	AreSafePrimes(tkh.p, tkh.p1, 10, t)
-
 }
 
 func TestInitQandQ1(t *testing.T) {
@@ -49,23 +46,24 @@ func TestInitPsAndQs(t *testing.T) {
 	tkh.Random = rand.Reader
 
 	tkh.initPsAndQs()
-	AreSafePrimes(tkh.q, tkh.q1, 10, t)
+
+	AreSafePrimes(tkh.p, tkh.p1, 10, t)
 	AreSafePrimes(tkh.q, tkh.q1, 10, t)
 }
 
 func TestArePsAndQsGood(t *testing.T) {
 	tkh := new(ThresholdKeyGenerator)
-	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(6), b(5), b(4), b(3)
+	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(887), b(443), b(839), b(419)
 	if !tkh.arePsAndQsGood() {
 		t.Fail()
 	}
 
-	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(6), b(5), b(6), b(3)
+	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(887), b(443), b(887), b(443)
 	if tkh.arePsAndQsGood() {
 		t.Fail()
 	}
 
-	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(6), b(5), b(5), b(3)
+	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(887), b(443), b(443), b(221)
 	if tkh.arePsAndQsGood() {
 		t.Fail()
 	}
@@ -73,19 +71,19 @@ func TestArePsAndQsGood(t *testing.T) {
 
 func TestInitShortcuts(t *testing.T) {
 	tkh := new(ThresholdKeyGenerator)
-	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(11), b(7), b(5), b(3)
+	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(839), b(419), b(887), b(443)
 	tkh.initShortcuts()
 
-	if n(tkh.n) != 11*5 {
+	if !reflect.DeepEqual(tkh.n, b(744193)) {
 		t.Error("wrong n", tkh.n)
 	}
-	if n(tkh.m) != 7*3 {
+	if !reflect.DeepEqual(tkh.m, b(185617)) {
 		t.Error("wrong m", tkh.m)
 	}
-	if n(tkh.nm) != 11*5*7*3 {
+	if !reflect.DeepEqual(tkh.nm, new(big.Int).Mul(b(744193), b(185617))) {
 		t.Error("wrong nm", tkh.nm)
 	}
-	if n(tkh.nSquare) != 11*5*11*5 {
+	if !reflect.DeepEqual(tkh.nSquare, new(big.Int).Mul(b(744193), b(744193))) {
 		t.Error("wrong nSquare", tkh.nSquare)
 	}
 }
