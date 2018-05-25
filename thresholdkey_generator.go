@@ -44,7 +44,7 @@ type ThresholdKeyGenerator struct {
 	polynomialCoefficients []*big.Int
 }
 
-// Preferable way to construct the ThresholdKeyGenerator.  No verification
+// Preferable way to construct the ThresholdKeyGenerator. No verification
 // is done on the input values.  You need to be sure that nbits is big enough
 // and that Threshold > TotalNumberOfDecryptionServers / 2.
 // The plaintext space for the key will be Z_n.
@@ -57,23 +57,23 @@ func GetThresholdKeyGenerator(nbits, TotalNumberOfDecryptionServers, Threshold i
 	return ret
 }
 
-func (this *ThresholdKeyGenerator) GenerateSafePrimes() (*big.Int, *big.Int, error) {
+func (this *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
 	return GenerateSafePrimes(this.nbits, this.Random)
 }
 
-func (this *ThresholdKeyGenerator) InitPandP1() error {
+func (this *ThresholdKeyGenerator) initPandP1() error {
 	var err error
-	this.p, this.p1, err = this.GenerateSafePrimes()
+	this.p, this.p1, err = this.generateSafePrimes()
 	return err
 }
 
-func (this *ThresholdKeyGenerator) InitQandQ1() error {
+func (this *ThresholdKeyGenerator) initQandQ1() error {
 	var err error
-	this.q, this.q1, err = this.GenerateSafePrimes()
+	this.q, this.q1, err = this.generateSafePrimes()
 	return err
 }
 
-func (this *ThresholdKeyGenerator) InitShortcuts() {
+func (this *ThresholdKeyGenerator) initShortcuts() {
 	this.n = new(big.Int).Mul(this.p, this.q)
 	this.m = new(big.Int).Mul(this.p1, this.q1)
 	this.nSquare = new(big.Int).Mul(this.n, this.n)
@@ -81,7 +81,7 @@ func (this *ThresholdKeyGenerator) InitShortcuts() {
 
 }
 
-func (this *ThresholdKeyGenerator) ArePsAndQsGood() bool {
+func (this *ThresholdKeyGenerator) arePsAndQsGood() bool {
 	if this.p.Cmp(this.q) == 0 {
 		return false
 	}
@@ -94,21 +94,21 @@ func (this *ThresholdKeyGenerator) ArePsAndQsGood() bool {
 	return true
 }
 
-func (this *ThresholdKeyGenerator) InitPsAndQs() error {
-	if err := this.InitPandP1(); err != nil {
+func (this *ThresholdKeyGenerator) initPsAndQs() error {
+	if err := this.initPandP1(); err != nil {
 		return err
 	}
-	if err := this.InitQandQ1(); err != nil {
+	if err := this.initQandQ1(); err != nil {
 		return err
 	}
-	if !this.ArePsAndQsGood() {
-		return this.InitPsAndQs()
+	if !this.arePsAndQsGood() {
+		return this.initPsAndQs()
 	}
 	return nil
 }
 
 // v generates a cyclic group of squares in Zn^2.
-func (this *ThresholdKeyGenerator) ComputeV() error {
+func (this *ThresholdKeyGenerator) computeV() error {
 	var err error
 	this.v, err = GetRandomGeneratorOfTheQuadraticResidue(this.nSquare, this.Random)
 	return err
@@ -138,18 +138,18 @@ func (this *ThresholdKeyGenerator) ComputeV() error {
 // z2 = m^-1 mod n
 //
 // x = a2*y2*z2 = 1 * m * [m^-1 mod n]
-func (this *ThresholdKeyGenerator) InitD() {
+func (this *ThresholdKeyGenerator) initD() {
 	mInverse := new(big.Int).ModInverse(this.m, this.n)
 	this.d = new(big.Int).Mul(mInverse, this.m)
 }
 
-func (this *ThresholdKeyGenerator) InitNumerialValues() error {
-	if err := this.InitPsAndQs(); err != nil {
+func (this *ThresholdKeyGenerator) initNumerialValues() error {
+	if err := this.initPsAndQs(); err != nil {
 		return err
 	}
-	this.InitShortcuts()
-	this.InitD()
-	return this.ComputeV()
+	this.initShortcuts()
+	this.initD()
+	return this.computeV()
 }
 
 // f(X) = a_0 X^0 + a_1 X^1 + ... + a_(w-1) X^(w-1)
@@ -158,7 +158,7 @@ func (this *ThresholdKeyGenerator) InitNumerialValues() error {
 // `w` - threshold
 // `a_i` - random value from {0, ... nm - 1} for 0<i<w
 // `a_0` is always equal `d`
-func (this *ThresholdKeyGenerator) GenerateHidingPolynomial() error {
+func (this *ThresholdKeyGenerator) generateHidingPolynomial() error {
 	this.polynomialCoefficients = make([]*big.Int, this.Threshold)
 	this.polynomialCoefficients[0] = this.d
 	var err error
@@ -173,7 +173,7 @@ func (this *ThresholdKeyGenerator) GenerateHidingPolynomial() error {
 
 // The secred share of the i'th authority is `f(i)`, where `f` is
 // the polynomial we generated in `GenerateHidingPolynomial` function.
-func (this *ThresholdKeyGenerator) ComputeShare(index int) *big.Int {
+func (this *ThresholdKeyGenerator) computeShare(index int) *big.Int {
 	share := big.NewInt(0)
 	for i := 0; i < this.Threshold; i++ {
 		a := this.polynomialCoefficients[i]
@@ -184,15 +184,15 @@ func (this *ThresholdKeyGenerator) ComputeShare(index int) *big.Int {
 	return new(big.Int).Mod(share, this.nm)
 }
 
-func (this *ThresholdKeyGenerator) CreateShares() []*big.Int {
+func (this *ThresholdKeyGenerator) createShares() []*big.Int {
 	shares := make([]*big.Int, this.TotalNumberOfDecryptionServers)
 	for i := 0; i < this.TotalNumberOfDecryptionServers; i++ {
-		shares[i] = this.ComputeShare(i)
+		shares[i] = this.computeShare(i)
 	}
 	return shares
 }
 
-func (this *ThresholdKeyGenerator) Delta() *big.Int {
+func (this *ThresholdKeyGenerator) delta() *big.Int {
 	return Factorial(this.TotalNumberOfDecryptionServers)
 }
 
@@ -205,9 +205,9 @@ func (this *ThresholdKeyGenerator) Delta() *big.Int {
 // `l` is the number of decryption servers
 // `s_i` is a secret share for server `i`.
 // Secret shares were previously generated in the `CrateShares` function.
-func (this *ThresholdKeyGenerator) CreateViArray(shares []*big.Int) (viArray []*big.Int) {
+func (this *ThresholdKeyGenerator) createViArray(shares []*big.Int) (viArray []*big.Int) {
 	viArray = make([]*big.Int, len(shares))
-	delta := this.Delta()
+	delta := this.delta()
 	for i, share := range shares {
 		tmp := new(big.Int).Mul(share, delta)
 		viArray[i] = new(big.Int).Exp(this.v, tmp, this.nSquare)
@@ -215,7 +215,7 @@ func (this *ThresholdKeyGenerator) CreateViArray(shares []*big.Int) (viArray []*
 	return viArray
 }
 
-func (this *ThresholdKeyGenerator) CreatePrivateKey(i int, share *big.Int, viArray []*big.Int) *ThresholdPrivateKey {
+func (this *ThresholdKeyGenerator) createPrivateKey(i int, share *big.Int, viArray []*big.Int) *ThresholdPrivateKey {
 	ret := new(ThresholdPrivateKey)
 	ret.N = this.n
 	ret.G = new(big.Int).Add(ret.N, ONE)
@@ -229,22 +229,22 @@ func (this *ThresholdKeyGenerator) CreatePrivateKey(i int, share *big.Int, viArr
 	return ret
 }
 
-func (this *ThresholdKeyGenerator) CreatePrivateKeys() []*ThresholdPrivateKey {
-	shares := this.CreateShares()
-	viArray := this.CreateViArray(shares)
+func (this *ThresholdKeyGenerator) createPrivateKeys() []*ThresholdPrivateKey {
+	shares := this.createShares()
+	viArray := this.createViArray(shares)
 	ret := make([]*ThresholdPrivateKey, this.TotalNumberOfDecryptionServers)
 	for i := 0; i < this.TotalNumberOfDecryptionServers; i++ {
-		ret[i] = this.CreatePrivateKey(i, shares[i], viArray)
+		ret[i] = this.createPrivateKey(i, shares[i], viArray)
 	}
 	return ret
 }
 
 func (this *ThresholdKeyGenerator) Generate() ([]*ThresholdPrivateKey, error) {
-	if err := this.InitNumerialValues(); err != nil {
+	if err := this.initNumerialValues(); err != nil {
 		return nil, err
 	}
-	if err := this.GenerateHidingPolynomial(); err != nil {
+	if err := this.generateHidingPolynomial(); err != nil {
 		return nil, err
 	}
-	return this.CreatePrivateKeys(), nil
+	return this.createPrivateKeys(), nil
 }
