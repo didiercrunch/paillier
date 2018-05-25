@@ -101,8 +101,31 @@ func (this *ThresholdKeyGenerator) ComputeV() error {
 	return err
 }
 
-// Choose d such that d=0 mod m and d=1 mod n, using Chinese remainder thm
-// we can find d using Chinese remainder thm note that $d=(m. (m^-1 mod n))$
+// Choose d such that d=0 (mod m) and d=1 (mod n).
+// See [DJN 10], section 5.1, "Key generation"
+//
+// From Chinese Remainder Theorem:
+// x = a1 (mod n1)
+// x = a2 (mod n2)
+//
+// N = n1*n2
+// y1 = N/n1
+// y2 = N/n2
+// z1 = y1^-1 mod n1
+// z2 = y2^-1 mod n2
+// Solution is x = a1*y1*z1 + a2*y2*z2
+//
+// In our case:
+// x = 0 (mod m)
+// x = 1 (mod n)
+//
+// Since a1 = 0, it's enough to compute a2*y2*z2 to get x.
+//
+// a2 = 1
+// y2 = mn/n = m
+// z2 = m^-1 mod n
+//
+// x = a2*y2*z2 = 1 * m * [m^-1 mod n]
 func (this *ThresholdKeyGenerator) InitD() {
 	mInverse := new(big.Int).ModInverse(this.m, this.n)
 	this.d = new(big.Int).Mul(mInverse, this.m)
