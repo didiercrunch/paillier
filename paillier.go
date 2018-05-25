@@ -7,7 +7,7 @@ import (
 )
 
 type PublicKey struct {
-	N *big.Int // usually G is set to N+1
+	N *big.Int
 }
 
 func (this *PublicKey) GetBSON() (interface{}, error) {
