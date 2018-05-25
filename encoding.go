@@ -117,17 +117,12 @@ type dbPrivateKey struct {
 
 func (this *PrivateKey) GetBSON() (interface{}, error) {
 	m := make(map[string]string)
-	if this.G != nil {
-		m["g"] = fmt.Sprintf("%x", this.G)
-	}
+
 	if this.N != nil {
 		m["n"] = fmt.Sprintf("%x", this.N)
 	}
 	if this.Lambda != nil {
 		m["lambda"] = fmt.Sprintf("%x", this.Lambda)
-	}
-	if this.Mu != nil {
-		m["mu"] = fmt.Sprintf("%x", this.Mu)
 	}
 	return m, nil
 }
@@ -143,20 +138,12 @@ func (this *PrivateKey) SetBSON(raw bson.Raw) error {
 			return err
 		}
 	}
-	if c.G != "" {
-		this.G, err = fromHex(c.G)
-		if err != nil {
-			return err
-		}
-	}
+
 	if c.Lambda != "" {
 		this.Lambda, err = fromHex(c.Lambda)
 		if err != nil {
 			return err
 		}
-	}
-	if c.Mu != "" {
-		this.Mu, err = fromHex(c.Mu)
 	}
 
 	return err

@@ -14,6 +14,7 @@ type ThresholdKey struct {
 	Threshold                      int
 	V                              *big.Int
 	Vi                             []*big.Int
+	G                              *big.Int // usually G is set to N+1
 }
 
 // returns the value of (4*delta**2)** -1  mod n
