@@ -171,12 +171,13 @@ func (this *ThresholdKeyGenerator) generateHidingPolynomial() error {
 	return nil
 }
 
-// The secred share of the i'th authority is `f(i)`, where `f` is
+// The secred share of the i'th authority is `f(i) mod nm`, where `f` is
 // the polynomial we generated in `GenerateHidingPolynomial` function.
 func (this *ThresholdKeyGenerator) computeShare(index int) *big.Int {
 	share := big.NewInt(0)
 	for i := 0; i < this.Threshold; i++ {
 		a := this.polynomialCoefficients[i]
+		// we index authorities from 1, that's why we do index+1 here
 		b := new(big.Int).Exp(big.NewInt(int64(index+1)), big.NewInt(int64(i)), nil)
 		tmp := new(big.Int).Mul(a, b)
 		share = new(big.Int).Add(share, tmp)
