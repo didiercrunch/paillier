@@ -219,7 +219,6 @@ func (this *ThresholdKeyGenerator) createViArray(shares []*big.Int) (viArray []*
 func (this *ThresholdKeyGenerator) createPrivateKey(i int, share *big.Int, viArray []*big.Int) *ThresholdPrivateKey {
 	ret := new(ThresholdPrivateKey)
 	ret.N = this.n
-	ret.G = new(big.Int).Add(ret.N, ONE)
 	ret.V = this.v
 
 	ret.TotalNumberOfDecryptionServers = this.TotalNumberOfDecryptionServers

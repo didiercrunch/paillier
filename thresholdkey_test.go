@@ -224,7 +224,6 @@ func TestDecryption(t *testing.T) {
 	tk.Threshold = 2
 	tk.TotalNumberOfDecryptionServers = 2
 	tk.N = b(637753)
-	tk.G = b(637754)
 	tk.V = b(70661107826)
 	if msg, err := tk.CombinePartialDecryptions([]*PartialDecryption{share1, share2}); err != nil {
 		t.Error(err)

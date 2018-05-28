@@ -14,7 +14,6 @@ type ThresholdKey struct {
 	Threshold                      int
 	V                              *big.Int
 	Vi                             []*big.Int
-	G                              *big.Int // usually G is set to N+1
 }
 
 // returns the value of (4*delta**2)** -1  mod n
@@ -165,7 +164,6 @@ func (this *ThresholdPrivateKey) GetThresholdKey() *ThresholdKey {
 	ret.V = new(big.Int).Add(this.V, big.NewInt(0))
 	ret.Vi = this.copyVi()
 	ret.N = new(big.Int).Add(this.N, big.NewInt(0))
-	ret.G = new(big.Int).Add(this.N, big.NewInt(1))
 	return ret
 }
 

@@ -207,7 +207,7 @@ func TestGenerate(t *testing.T) {
 		if len(tpk.Vi) != 10 {
 			t.Fail()
 		}
-		if tpk.G == nil || tpk.N == nil {
+		if tpk.N == nil {
 			t.Fail()
 		}
 		if tpk.Threshold != 6 || tpk.TotalNumberOfDecryptionServers != 10 {
