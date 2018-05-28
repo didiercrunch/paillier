@@ -8,6 +8,20 @@ import (
 	"math/big"
 )
 
+// Public key for a threshold Paillier scheme.
+//
+// `V` is a generator in  the cyclic group of squares Z_n^2 and is used to
+// execute a zero-knowledge proof of a received share decryption.
+//
+// `Vi` is an array of verification keys for each decryption server `i`.
+//
+// Key generation, encryption, share decryption and combining for the threshold
+// Paillier scheme has been described in [DJN 10], section 5.1.
+//
+//     [DJN 10]: Ivan Damgard, Mads Jurik, Jesper Buus Nielsen, (2010)
+//               A Generalization of Paillier’s Public-Key System
+//               with Applications to Electronic Voting
+//               Aarhus University, Dept. of Computer Science, BRICS
 type ThresholdKey struct {
 	PublicKey
 	TotalNumberOfDecryptionServers int
@@ -16,17 +30,23 @@ type ThresholdKey struct {
 	Vi                             []*big.Int
 }
 
-// returns the value of (4*delta**2)** -1  mod n
+// Returns the value of [(4*delta^2)]^-1  mod n.
+// It is a constant value for the given `ThresholdKey` and is used in the last
+// step of share combining.
 func (this *ThresholdKey) combineSharesConstant() *big.Int {
 	tmp := new(big.Int).Mul(FOUR, new(big.Int).Mul(this.delta(), this.delta()))
 	return (&big.Int{}).ModInverse(tmp, this.N)
 }
 
-// returns the factorial of the number of TotalNumberOfDecryptionServers
+// Returns the factorial of the number of `TotalNumberOfDecryptionServers`.
+// It is a contant value for the given `ThresholdKey`.
 func (this *ThresholdKey) delta() *big.Int {
 	return Factorial(this.TotalNumberOfDecryptionServers)
 }
 
+// Checks if the number of received, unique shares is less than the
+// required threshold.
+// This method does not execute ZKP on received shares.
 func (this *ThresholdKey) makeVerificationBeforeCombiningPartialDecryptions(shares []*PartialDecryption) error {
 	if len(shares) < this.Threshold {
 		return errors.New("Threshold not meet")
@@ -47,6 +67,8 @@ func (this *ThresholdKey) updateLambda(share1, share2 *PartialDecryption, lambda
 	return new(big.Int).Div(num, denom)
 }
 
+// Evaluates lambda parameter for each decrypted share. See second figure in the
+// "Share combining" paragraph in [DJK 10], section 5.2.
 func (this *ThresholdKey) computeLambda(share *PartialDecryption, shares []*PartialDecryption) *big.Int {
 	lambda := this.delta()
 	for _, share2 := range shares {
@@ -64,6 +86,7 @@ func (this *ThresholdKey) updateCprime(cprime, lambda *big.Int, share *PartialDe
 	return new(big.Int).Mod(ret, this.GetNSquare())
 }
 
+// TODO: unused? kill?
 func (this *ThresholdKey) divide(a, b *big.Int) *big.Int {
 	if a.Cmp(ZERO) == -1 {
 		if b.Cmp(ZERO) == -1 {
@@ -83,11 +106,18 @@ func (this *ThresholdKey) exp(a, b, c *big.Int) *big.Int {
 
 }
 
+// Executes the last step of message decryption. Takes `cprime` value computed
+// from valid shares provided by decryption servers and multiplies this value
+// by `combineSharesContant` which is specific to the given public `ThresholdKey`.
 func (this *ThresholdKey) computeDecryption(cprime *big.Int) *big.Int {
 	l := L(cprime, this.N)
 	return new(big.Int).Mod(new(big.Int).Mul(this.combineSharesConstant(), l), this.N)
 }
 
+// Combines partial decryptions provided by decryption servers and returns
+// decrypted message.
+// This function does not verify zero knowledge proofs. Returned message can be
+// incorrectly decrypted if an adversary corrupted partial decryption.
 func (this *ThresholdKey) CombinePartialDecryptions(shares []*PartialDecryption) (*big.Int, error) {
 	if err := this.makeVerificationBeforeCombiningPartialDecryptions(shares); err != nil {
 		return nil, err
@@ -102,6 +132,10 @@ func (this *ThresholdKey) CombinePartialDecryptions(shares []*PartialDecryption)
 	return this.computeDecryption(cprime), nil
 }
 
+// Combines partial decryptions provided by decription servers and returns
+// decrypted message.
+// Function verifies zero knowledge proofs and filters out all shares that failed
+// verification.
 func (this *ThresholdKey) CombinePartialDecryptionsZKP(shares []*PartialDecryptionZKP) (*big.Int, error) {
 	ret := make([]*PartialDecryption, 0)
 	for _, share := range shares {
@@ -157,7 +191,7 @@ func (this *ThresholdPrivateKey) copyVi() []*big.Int {
 	return ret
 }
 
-func (this *ThresholdPrivateKey) GetThresholdKey() *ThresholdKey {
+func (this *ThresholdPrivateKey) getThresholdKey() *ThresholdKey {
 	ret := new(ThresholdKey)
 	ret.Threshold = this.Threshold
 	ret.TotalNumberOfDecryptionServers = this.TotalNumberOfDecryptionServers
@@ -184,7 +218,7 @@ func (this *ThresholdPrivateKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
 
 func (this *ThresholdPrivateKey) DecryptAndProduceZNP(c *big.Int, random io.Reader) (*PartialDecryptionZKP, error) {
 	pd := new(PartialDecryptionZKP)
-	pd.Key = this.GetThresholdKey()
+	pd.Key = this.getThresholdKey()
 	pd.C = c
 	pd.Id = this.Id
 	pd.Decryption = this.Decrypt(c).Decryption
