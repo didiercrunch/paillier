@@ -230,23 +230,6 @@ func TestDecryption(t *testing.T) {
 	} else if n(msg) != 100 {
 		t.Error("decrypted message was not 100 but ", msg)
 	}
-
-}
-
-func TestDivide(t *testing.T) {
-	tk := new(ThresholdKey)
-	if r := tk.divide(b(77), b(4)); n(r) != 19 {
-		t.Error("77 / 4 != 19 ( ", r, " )")
-	}
-	if r := tk.divide(b(-77), b(-4)); n(r) != 19 {
-		t.Error("-77 / -4 != 19 ( ", r, " )")
-	}
-	if r := tk.divide(b(-77), b(4)); n(r) != -19 {
-		t.Error("-77 / 4 != -19 ( ", r, " )")
-	}
-	if r := tk.divide(b(77), b(-4)); n(r) != -19 {
-		t.Error("77 / -4 != -19 ( ", r, " )")
-	}
 }
 
 func TestValidate(t *testing.T) {

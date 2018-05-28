@@ -86,24 +86,12 @@ func (this *ThresholdKey) updateCprime(cprime, lambda *big.Int, share *PartialDe
 	return new(big.Int).Mod(ret, this.GetNSquare())
 }
 
-// TODO: unused? kill?
-func (this *ThresholdKey) divide(a, b *big.Int) *big.Int {
-	if a.Cmp(ZERO) == -1 {
-		if b.Cmp(ZERO) == -1 {
-			return new(big.Int).Div(new(big.Int).Neg(a), new(big.Int).Neg(b))
-		}
-		return new(big.Int).Neg(new(big.Int).Div(new(big.Int).Neg(a), b))
-	}
-	return new(big.Int).Div(a, b)
-}
-
 func (this *ThresholdKey) exp(a, b, c *big.Int) *big.Int {
 	if b.Cmp(ZERO) == -1 {
 		ret := new(big.Int).Exp(a, new(big.Int).Neg(b), c)
 		return new(big.Int).ModInverse(ret, c)
 	}
 	return new(big.Int).Exp(a, b, c)
-
 }
 
 // Executes the last step of message decryption. Takes `cprime` value computed
@@ -146,11 +134,10 @@ func (this *ThresholdKey) CombinePartialDecryptionsZKP(shares []*PartialDecrypti
 	return this.CombinePartialDecryptions(ret)
 }
 
-//  Verify if the decryption of `encryptedMessage` has well been done.
-//  It verifies all the zero-knoledge proofs, the value of the decrypted
-//  and decrypted message.
-//  The method returns `nil` if everything is good.  Otherwise it returns an
-//  explicative message
+// Verifies if the decryption of `encryptedMessage` has been done properly.
+// It verifies all the zero-knoledge proofs, the value of the decrypted
+// and decrypted message. The method returns `nil` if everything is fine.
+// Otherwise, it returns an explicative message.
 func (this *ThresholdKey) VerifyDecryption(encryptedMessage, decryptedMessage *big.Int, shares []*PartialDecryptionZKP) error {
 	for _, share := range shares {
 		if share.C.Cmp(encryptedMessage) != 0 {
