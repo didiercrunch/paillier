@@ -17,17 +17,17 @@ type ThresholdKey struct {
 }
 
 // returns the value of (4*delta**2)** -1  mod n
-func (this *ThresholdKey) CombineSharesConstant() *big.Int {
-	tmp := new(big.Int).Mul(FOUR, new(big.Int).Mul(this.Delta(), this.Delta()))
+func (this *ThresholdKey) combineSharesConstant() *big.Int {
+	tmp := new(big.Int).Mul(FOUR, new(big.Int).Mul(this.delta(), this.delta()))
 	return (&big.Int{}).ModInverse(tmp, this.N)
 }
 
 // returns the factorial of the number of TotalNumberOfDecryptionServers
-func (this *ThresholdKey) Delta() *big.Int {
+func (this *ThresholdKey) delta() *big.Int {
 	return Factorial(this.TotalNumberOfDecryptionServers)
 }
 
-func (this *ThresholdKey) MakeVerificationBeforeCombiningPartialDecryptions(shares []*PartialDecryption) error {
+func (this *ThresholdKey) makeVerificationBeforeCombiningPartialDecryptions(shares []*PartialDecryption) error {
 	if len(shares) < this.Threshold {
 		return errors.New("Threshold not meet")
 	}
@@ -41,17 +41,17 @@ func (this *ThresholdKey) MakeVerificationBeforeCombiningPartialDecryptions(shar
 	return nil
 }
 
-func (this *ThresholdKey) UpdateLambda(share1, share2 *PartialDecryption, lambda *big.Int) *big.Int {
+func (this *ThresholdKey) updateLambda(share1, share2 *PartialDecryption, lambda *big.Int) *big.Int {
 	num := new(big.Int).Mul(lambda, big.NewInt(int64(-share2.Id)))
 	denom := big.NewInt(int64(share1.Id - share2.Id))
 	return new(big.Int).Div(num, denom)
 }
 
-func (this *ThresholdKey) ComputeLambda(share *PartialDecryption, shares []*PartialDecryption) *big.Int {
-	lambda := this.Delta()
+func (this *ThresholdKey) computeLambda(share *PartialDecryption, shares []*PartialDecryption) *big.Int {
+	lambda := this.delta()
 	for _, share2 := range shares {
 		if share2.Id != share.Id {
-			lambda = this.UpdateLambda(share, share2, lambda)
+			lambda = this.updateLambda(share, share2, lambda)
 		}
 	}
 	return lambda
@@ -85,17 +85,17 @@ func (this *ThresholdKey) exp(a, b, c *big.Int) *big.Int {
 
 func (this *ThresholdKey) computeDecryption(cprime *big.Int) *big.Int {
 	l := L(cprime, this.N)
-	return new(big.Int).Mod(new(big.Int).Mul(this.CombineSharesConstant(), l), this.N)
+	return new(big.Int).Mod(new(big.Int).Mul(this.combineSharesConstant(), l), this.N)
 }
 
 func (this *ThresholdKey) CombinePartialDecryptions(shares []*PartialDecryption) (*big.Int, error) {
-	if err := this.MakeVerificationBeforeCombiningPartialDecryptions(shares); err != nil {
+	if err := this.makeVerificationBeforeCombiningPartialDecryptions(shares); err != nil {
 		return nil, err
 	}
 
 	cprime := ONE
 	for _, share := range shares {
-		lambda := this.ComputeLambda(share, shares)
+		lambda := this.computeLambda(share, shares)
 		cprime = this.updateCprime(cprime, lambda, share)
 	}
 
@@ -143,7 +143,7 @@ type ThresholdPrivateKey struct {
 func (this *ThresholdPrivateKey) Decrypt(c *big.Int) *PartialDecryption {
 	ret := new(PartialDecryption)
 	ret.Id = this.Id
-	exp := new(big.Int).Mul(this.Share, new(big.Int).Mul(TWO, this.Delta()))
+	exp := new(big.Int).Mul(this.Share, new(big.Int).Mul(TWO, this.delta()))
 	ret.Decryption = new(big.Int).Exp(c, exp, this.GetNSquare())
 
 	return ret
@@ -167,11 +167,10 @@ func (this *ThresholdPrivateKey) GetThresholdKey() *ThresholdKey {
 	return ret
 }
 
-func (this *ThresholdPrivateKey) ComputeZ(r, e *big.Int) *big.Int {
-	tmp := new(big.Int).Mul(e, this.Delta())
+func (this *ThresholdPrivateKey) computeZ(r, e *big.Int) *big.Int {
+	tmp := new(big.Int).Mul(e, this.delta())
 	tmp = new(big.Int).Mul(tmp, this.Share)
 	return new(big.Int).Add(r, tmp)
-
 }
 
 func (this *ThresholdPrivateKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
@@ -181,7 +180,6 @@ func (this *ThresholdPrivateKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
 	hash.Write(c4.Bytes())
 	hash.Write(ci2.Bytes())
 	return new(big.Int).SetBytes(hash.Sum([]byte{}))
-
 }
 
 func (this *ThresholdPrivateKey) DecryptAndProduceZNP(c *big.Int, random io.Reader) (*PartialDecryptionZKP, error) {
@@ -208,7 +206,7 @@ func (this *ThresholdPrivateKey) DecryptAndProduceZNP(c *big.Int, random io.Read
 
 	pd.E = this.computeHash(a, b, c4, ci2)
 
-	pd.Z = this.ComputeZ(r, pd.E)
+	pd.Z = this.computeZ(r, pd.E)
 
 	return pd, nil
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func GetThresholdPrivateKey() *ThresholdPrivateKey {
+func getThresholdPrivateKey() *ThresholdPrivateKey {
 	tkh := GetThresholdKeyGenerator(32, 10, 6, rand.Reader)
 	tpks, err := tkh.Generate()
 	if err != nil {
@@ -19,7 +19,7 @@ func GetThresholdPrivateKey() *ThresholdPrivateKey {
 func TestDelta(t *testing.T) {
 	tk := new(ThresholdKey)
 	tk.TotalNumberOfDecryptionServers = 6
-	if delta := tk.Delta(); 720 != n(delta) {
+	if delta := tk.delta(); 720 != n(delta) {
 		t.Error("Delta is not 720 but", delta)
 	}
 }
@@ -29,7 +29,7 @@ func TestCombineSharesConstant(t *testing.T) {
 	tk.N = big.NewInt(101 * 103)
 	tk.TotalNumberOfDecryptionServers = 6
 
-	if c := tk.CombineSharesConstant(); !reflect.DeepEqual(big.NewInt(4558), c) {
+	if c := tk.combineSharesConstant(); !reflect.DeepEqual(big.NewInt(4558), c) {
 		t.Error("wrong combined key.  ", c)
 	}
 }
@@ -66,7 +66,7 @@ func TestCopyVi(t *testing.T) {
 }
 
 func TestEncryptWithThresholdKey(t *testing.T) {
-	pd := GetThresholdPrivateKey()
+	pd := getThresholdPrivateKey()
 	_, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Fail()
@@ -74,7 +74,7 @@ func TestEncryptWithThresholdKey(t *testing.T) {
 }
 
 func TestDecryptWithThresholdKey(t *testing.T) {
-	pd := GetThresholdPrivateKey()
+	pd := getThresholdPrivateKey()
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Fail()
@@ -111,7 +111,7 @@ func TestVerifyPart2(t *testing.T) {
 }
 
 func TestDecryptAndProduceZNP(t *testing.T) {
-	pd := GetThresholdPrivateKey()
+	pd := getThresholdPrivateKey()
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Error(err)
@@ -131,16 +131,16 @@ func TestDecryptAndProduceZNP(t *testing.T) {
 func TestMakeVerificationBeforeCombiningPartialDecryptions(t *testing.T) {
 	tk := new(ThresholdKey)
 	tk.Threshold = 2
-	if tk.MakeVerificationBeforeCombiningPartialDecryptions([]*PartialDecryption{}) == nil {
+	if tk.makeVerificationBeforeCombiningPartialDecryptions([]*PartialDecryption{}) == nil {
 		t.Fail()
 	}
 	prms := []*PartialDecryption{new(PartialDecryption), new(PartialDecryption)}
 	prms[1].Id = 1
-	if tk.MakeVerificationBeforeCombiningPartialDecryptions(prms) != nil {
+	if tk.makeVerificationBeforeCombiningPartialDecryptions(prms) != nil {
 		t.Fail()
 	}
 	prms[1].Id = 0
-	if tk.MakeVerificationBeforeCombiningPartialDecryptions(prms) == nil {
+	if tk.makeVerificationBeforeCombiningPartialDecryptions(prms) == nil {
 		t.Fail()
 	}
 }
@@ -150,7 +150,7 @@ func TestUpdateLambda(t *testing.T) {
 	lambda := b(11)
 	share1 := &PartialDecryption{3, b(5)}
 	share2 := &PartialDecryption{7, b(3)}
-	res := tk.UpdateLambda(share1, share2, lambda)
+	res := tk.updateLambda(share1, share2, lambda)
 	if n(res) != 20 {
 		t.Error("wrong lambda", n(res))
 	}
@@ -250,7 +250,7 @@ func TestDivide(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	pk := GetThresholdPrivateKey()
+	pk := getThresholdPrivateKey()
 	if err := pk.Validate(rand.Reader); err != nil {
 		t.Error(err)
 	}
