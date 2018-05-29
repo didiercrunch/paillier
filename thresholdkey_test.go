@@ -216,6 +216,30 @@ func TestEncryptingDecrypting(t *testing.T) {
 	}
 }
 
+func TestHomomorphicThresholdEncryption(t *testing.T) {
+	tkh := GetThresholdKeyGenerator(10, 2, 2, rand.Reader)
+	tpks, _ := tkh.Generate()
+
+	plainText1 := b(13)
+	plainText2 := b(19)
+
+	cypher1, _ := tpks[0].Encrypt(plainText1, rand.Reader)
+	cypher2, _ := tpks[1].Encrypt(plainText2, rand.Reader)
+
+	cypher3 := tpks[0].Add(cypher1, cypher2)
+
+	share1 := tpks[0].Decrypt(cypher3.C)
+	share2 := tpks[1].Decrypt(cypher3.C)
+
+	combined, _ := tpks[0].CombinePartialDecryptions([]*PartialDecryption{share1, share2})
+
+	expected := big.NewInt(32) // 13 + 19
+
+	if !reflect.DeepEqual(combined, expected) { // 13 + 19
+		t.Errorf("Unexpected decryption result. Expected %v but got %v", expected, combined)
+	}
+}
+
 func TestDecryption(t *testing.T) {
 	// test the correct decryption of '100'.
 	share1 := &PartialDecryption{1, b(384111638639)}
@@ -347,5 +371,4 @@ func TestVerifyDecryption(t *testing.T) {
 	if err = pk.VerifyDecryption(new(big.Int).Add(b(1), cypher.C), b(101), pds); err == nil {
 		t.Error(err)
 	}
-
 }
