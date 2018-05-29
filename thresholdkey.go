@@ -79,6 +79,16 @@ func (this *ThresholdKey) computeLambda(share *PartialDecryption, shares []*Part
 	return lambda
 }
 
+// Used to evaluate c' parameter which combines individual share decryptions.
+//
+// Modulo division is performed on the computed exponent to avoid creating
+// large numbers. This is possible because of the following property of modulo:
+// A^B mod C = (A mod C)^B mod C
+//
+// Modulo division is performed on the computed coefficient because of the
+// following property of modulo:
+// (AB) mod C = (A mod C * B mod C) mod C
+// Note, we need to combine coefficients into single c'.
 func (this *ThresholdKey) updateCprime(cprime, lambda *big.Int, share *PartialDecryption) *big.Int {
 	twoLambda := new(big.Int).Mul(TWO, lambda)
 	ret := this.exp(share.Decryption, twoLambda, this.GetNSquare())
@@ -154,13 +164,17 @@ func (this *ThresholdKey) VerifyDecryption(encryptedMessage, decryptedMessage *b
 	return nil
 }
 
+// Private key for a threshold Paillier scheme. Holds private information
+// for the given decryption server.
+// `Id` is the unique identifier of a decryption server and `Share` is a secret
+// share generated from hiding polynomial and is used for a partial share decryption.
 type ThresholdPrivateKey struct {
 	ThresholdKey
 	Id    int
 	Share *big.Int
 }
 
-//  Decrypt the cypher text and returns the partial decryption
+// Decrypts the cypher text and returns the partial decryption
 func (this *ThresholdPrivateKey) Decrypt(c *big.Int) *PartialDecryption {
 	ret := new(PartialDecryption)
 	ret.Id = this.Id
@@ -264,7 +278,6 @@ type PartialDecryptionZKP struct {
 	E   *big.Int      // the challenge
 	Z   *big.Int      // the value needed to check to verify the decryption
 	C   *big.Int      // the input cypher text
-
 }
 
 func (this *PartialDecryptionZKP) verifyPart1() *big.Int {
