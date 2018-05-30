@@ -118,7 +118,6 @@ func TestGenerateHidingPolynomial(t *testing.T) {
 	tkh.Random = rand.Reader
 	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(err)
-		return
 	}
 	if err := tkh.generateHidingPolynomial(); err != nil {
 		t.Error(err)
@@ -126,7 +125,6 @@ func TestGenerateHidingPolynomial(t *testing.T) {
 	p := tkh.polynomialCoefficients
 	if len(p) != tkh.Threshold {
 		t.Fail()
-		return
 	}
 	if n(p[0]) != n(tkh.d) {
 		t.Fail()
@@ -159,11 +157,9 @@ func TestCreateShares(t *testing.T) {
 	tkh.Random = rand.Reader
 	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(err)
-		return
 	}
 	if err := tkh.generateHidingPolynomial(); err != nil {
 		t.Error(err)
-		return
 	}
 
 	if shares := tkh.createShares(); len(shares) != 100 {
@@ -223,7 +219,6 @@ func TestComputeV(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		if err := tkh.computeV(); err != nil {
 			t.Error(err)
-			return
 		}
 		if tkh.v.Cmp(tkh.nSquare) > 0 {
 			t.Error("v is too big")
@@ -235,5 +230,4 @@ func TestComputeV(t *testing.T) {
 	t.Error(`v has never been bigger than n.  It is suspicious in the sense<
 	than it was taken in the range 0...n**2 -1
 	`)
-
 }

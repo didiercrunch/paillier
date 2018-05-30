@@ -115,12 +115,10 @@ func TestDecryptAndProduceZNP(t *testing.T) {
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	znp, err := pd.DecryptAndProduceZNP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 
 	if !znp.Verify() {
@@ -174,13 +172,11 @@ func TestEncryptingDecryptingSimple(t *testing.T) {
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	message := b(100)
 	c, err := tpks[1].Encrypt(message, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	share1 := tpks[0].Decrypt(c.C)
 	message2, err := tpks[0].CombinePartialDecryptions([]*PartialDecryption{share1})
@@ -197,13 +193,11 @@ func TestEncryptingDecrypting(t *testing.T) {
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	message := b(100)
 	c, err := tpks[1].Encrypt(message, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	share1 := tpks[0].Decrypt(c.C)
 	share2 := tpks[1].Decrypt(c.C)
@@ -272,23 +266,19 @@ func TestCombinePartialDecryptionsZKP(t *testing.T) {
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	message := b(100)
 	c, err := tpks[1].Encrypt(message, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	share1, err := tpks[0].DecryptAndProduceZNP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	share2, err := tpks[1].DecryptAndProduceZNP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	message2, err := tpks[0].CombinePartialDecryptionsZKP([]*PartialDecryptionZKP{share1, share2})
 	if err != nil {
@@ -338,28 +328,23 @@ func TestVerifyDecryption(t *testing.T) {
 	pk := &tpks[0].ThresholdKey
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	expt := b(101)
 	cypher, err := tpks[0].Encrypt(expt, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	pd1, err := tpks[0].DecryptAndProduceZNP(cypher.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	pd2, err := tpks[1].DecryptAndProduceZNP(cypher.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	pds := []*PartialDecryptionZKP{pd1, pd2}
 	if err != nil {
 		t.Error(err)
-		return
 	}
 
 	if err = pk.VerifyDecryption(cypher.C, b(101), pds); err != nil {
