@@ -13,7 +13,8 @@ import (
 // `V` is a generator in  the cyclic group of squares Z_n^2 and is used to
 // execute a zero-knowledge proof of a received share decryption.
 //
-// `Vi` is an array of verification keys for each decryption server `i`.
+// `Vi` is an array of verification keys for each decryption server `i` used to
+// execute a zero-knowledge proof of a received share decryption.
 //
 // Key generation, encryption, share decryption and combining for the threshold
 // Paillier scheme has been described in [DJN 10], section 5.1.
@@ -26,8 +27,8 @@ type ThresholdKey struct {
 	PublicKey
 	TotalNumberOfDecryptionServers int
 	Threshold                      int
-	V                              *big.Int
-	Vi                             []*big.Int
+	V                              *big.Int   // needed for ZKP
+	Vi                             []*big.Int // needed for ZKP
 }
 
 // Returns the value of [(4*delta^2)]^-1  mod n.
@@ -145,7 +146,7 @@ func (this *ThresholdKey) CombinePartialDecryptionsZKP(shares []*PartialDecrypti
 }
 
 // Verifies if the decryption of `encryptedMessage` has been done properly.
-// It verifies all the zero-knoledge proofs, the value of the decrypted
+// It verifies all the zero-knoledge proofs, the value of the encrypted
 // and decrypted message. The method returns `nil` if everything is fine.
 // Otherwise, it returns an explicative message.
 func (this *ThresholdKey) VerifyDecryption(encryptedMessage, decryptedMessage *big.Int, shares []*PartialDecryptionZKP) error {
@@ -246,8 +247,8 @@ func (this *ThresholdPrivateKey) DecryptAndProduceZNP(c *big.Int, random io.Read
 	return pd, nil
 }
 
-//  Verify if the partial decryption key is well formed.  If well formed,
-//  the method return nil else an explicative error is returned.
+// Verifies if the partial decryption key is well formed.  If well formed,
+// the method return nil else an explicative error is returned.
 func (this *ThresholdPrivateKey) Validate(random io.Reader) error {
 	m, err := rand.Int(random, this.N)
 	if err != nil {
@@ -272,6 +273,43 @@ type PartialDecryption struct {
 	Decryption *big.Int
 }
 
+// A non-interactive ZKP based on the Fiat–Shamir heuristic. This algorithm
+// proves that the decryption server indeed raised secret to his secret exponent
+// (`ThresholdPrivateKey.Share`) by comparison with the public verification key
+// (`ThresholdKey.Vi`). Recall that v_i = v^(delta s_i).
+//
+// This is essentialy a protocol for the equality of discrete logs,
+// log_{c^4}(c_i^2) = log_v(v_i).
+//
+// The Fiat-Shamir scheme works as follows in our case:
+//
+// ZKP construction
+//
+// - Pick random r
+// - Compute E as:
+//   E = HASH(a, b, c^4, c_i^2 ), where
+//     a = (c^4)^r mod n^2
+//     b = V^r mod n^2
+//     c is a cyphertext,
+//     V is a generator from ThresholdKey.V
+//     c_i is a partial decryption for this server
+// - Compute Z as:
+//    delta * E * s_i + r, where
+//      delta is the factorial of the number of decryption servers
+//      s_i is a secret share for this server
+//
+// ZKP verification
+//
+// - Compute the original a from
+//   a = a1 * a2 mod n^2
+//   a1 = (c^4)^Z
+//   a2 = [ (c_i^2)^E ]^-1 mod n^2
+// - Compute the original b from
+//   b = b1 * b2 mod n^2
+//   b1 = V^Z
+//   b2 = [ v_i^E ] -1 mod n^2
+// - Rehash H(a, b, c^4, c_i)
+// - Compare ZKP hash with the one just computed
 type PartialDecryptionZKP struct {
 	PartialDecryption
 	Key *ThresholdKey // the public key used to encrypt
@@ -281,24 +319,20 @@ type PartialDecryptionZKP struct {
 }
 
 func (this *PartialDecryptionZKP) verifyPart1() *big.Int {
-	c4 := new(big.Int).Exp(this.C, FOUR, nil)
-	decryption2 := new(big.Int).Exp(this.Decryption, TWO, nil)
+	c4 := new(big.Int).Exp(this.C, FOUR, nil)                  // c^4
+	decryption2 := new(big.Int).Exp(this.Decryption, TWO, nil) // c_i^2
 
-	a1 := new(big.Int).Exp(c4, this.Z, this.Key.GetNSquare())
-	a2 := new(big.Int).Exp(decryption2, this.E, this.Key.GetNSquare())
+	a1 := new(big.Int).Exp(c4, this.Z, this.Key.GetNSquare())          // (c^4)^Z
+	a2 := new(big.Int).Exp(decryption2, this.E, this.Key.GetNSquare()) // (c_i^2)^E
 	a2 = new(big.Int).ModInverse(a2, this.Key.GetNSquare())
 	a := new(big.Int).Mod(new(big.Int).Mul(a1, a2), this.Key.GetNSquare())
 	return a
 }
 
-func (this *PartialDecryptionZKP) neg(n *big.Int) *big.Int {
-	return new(big.Int).Neg(n)
-}
-
 func (this *PartialDecryptionZKP) verifyPart2() *big.Int {
-	vi := this.Key.Vi[this.Id-1]
-	b1 := new(big.Int).Exp(this.Key.V, this.Z, this.Key.GetNSquare())
-	b2 := new(big.Int).Exp(vi, this.E, this.Key.GetNSquare())
+	vi := this.Key.Vi[this.Id-1]                                      // servers are indexed from 1
+	b1 := new(big.Int).Exp(this.Key.V, this.Z, this.Key.GetNSquare()) // V^Z
+	b2 := new(big.Int).Exp(vi, this.E, this.Key.GetNSquare())         // (v_i)^E
 	b2 = new(big.Int).ModInverse(b2, this.Key.GetNSquare())
 	b := new(big.Int).Mod(new(big.Int).Mul(b1, b2), this.Key.GetNSquare())
 	return b
