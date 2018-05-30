@@ -85,14 +85,13 @@ func TestPartialDecryptionZKPJsonification(t *testing.T) {
 	pd.Key.Threshold = 98
 	pd.Key.TotalNumberOfDecryptionServers = 230
 	pd.Id = 1
-	pd.Key.Vi = []*big.Int{b(77), b(67)} // vi is 67
+	pd.Key.Vi = []*big.Int{b(77), b(67)}
 	pd.Key.N = b(131)
 	pd.Key.V = b(101)
 	pd.Decryption = b(171)
 	pd.E = b(112)
 	pd.C = b(99)
 	pd.Key.N = b(345)
-	pd.Key.G = b(99)
 	pd.Z = b(88)
 
 	AssertJSONIsGood(pd, new(PartialDecryptionZKP), t)
@@ -111,13 +110,18 @@ func TestPartialDecryptionZKPBSONification(t *testing.T) {
 	pd.E = b(112)
 	pd.C = b(99)
 	pd.Key.N = b(345)
-	pd.Key.G = b(99)
 	pd.Z = b(88)
 
 	AssertBSONIsGood(pd, new(PartialDecryptionZKP), t)
 }
 
 func TestThresholdKeyBSON(t *testing.T) {
-	key := &ThresholdKey{PublicKey{b(9)}, 7, 6, b(3), []*big.Int{b(2), b(34)}, b(8)}
+	key := &ThresholdKey{
+		PublicKey:                      PublicKey{b(9)},
+		TotalNumberOfDecryptionServers: 7,
+		Threshold:                      6,
+		V:                              b(3),
+		Vi:                             []*big.Int{b(2), b(34)},
+	}
 	AssertBSONIsGood(key, new(ThresholdKey), t)
 }
