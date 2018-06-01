@@ -34,22 +34,22 @@ type ThresholdKey struct {
 // Returns the value of [(4*delta^2)]^-1  mod n.
 // It is a constant value for the given `ThresholdKey` and is used in the last
 // step of share combining.
-func (this *ThresholdKey) combineSharesConstant() *big.Int {
-	tmp := new(big.Int).Mul(FOUR, new(big.Int).Mul(this.delta(), this.delta()))
-	return (&big.Int{}).ModInverse(tmp, this.N)
+func (tk *ThresholdKey) combineSharesConstant() *big.Int {
+	tmp := new(big.Int).Mul(FOUR, new(big.Int).Mul(tk.delta(), tk.delta()))
+	return (&big.Int{}).ModInverse(tmp, tk.N)
 }
 
 // Returns the factorial of the number of `TotalNumberOfDecryptionServers`.
 // It is a contant value for the given `ThresholdKey`.
-func (this *ThresholdKey) delta() *big.Int {
-	return Factorial(this.TotalNumberOfDecryptionServers)
+func (tk *ThresholdKey) delta() *big.Int {
+	return Factorial(tk.TotalNumberOfDecryptionServers)
 }
 
 // Checks if the number of received, unique shares is less than the
 // required threshold.
 // This method does not execute ZKP on received shares.
-func (this *ThresholdKey) makeVerificationBeforeCombiningPartialDecryptions(shares []*PartialDecryption) error {
-	if len(shares) < this.Threshold {
+func (tk *ThresholdKey) makeVerificationBeforeCombiningPartialDecryptions(shares []*PartialDecryption) error {
+	if len(shares) < tk.Threshold {
 		return errors.New("Threshold not meet")
 	}
 	tmp := make(map[int]bool)
@@ -62,7 +62,7 @@ func (this *ThresholdKey) makeVerificationBeforeCombiningPartialDecryptions(shar
 	return nil
 }
 
-func (this *ThresholdKey) updateLambda(share1, share2 *PartialDecryption, lambda *big.Int) *big.Int {
+func (tk *ThresholdKey) updateLambda(share1, share2 *PartialDecryption, lambda *big.Int) *big.Int {
 	num := new(big.Int).Mul(lambda, big.NewInt(int64(-share2.Id)))
 	denom := big.NewInt(int64(share1.Id - share2.Id))
 	return new(big.Int).Div(num, denom)
@@ -70,11 +70,11 @@ func (this *ThresholdKey) updateLambda(share1, share2 *PartialDecryption, lambda
 
 // Evaluates lambda parameter for each decrypted share. See second figure in the
 // "Share combining" paragraph in [DJK 10], section 5.2.
-func (this *ThresholdKey) computeLambda(share *PartialDecryption, shares []*PartialDecryption) *big.Int {
-	lambda := this.delta()
+func (tk *ThresholdKey) computeLambda(share *PartialDecryption, shares []*PartialDecryption) *big.Int {
+	lambda := tk.delta()
 	for _, share2 := range shares {
 		if share2.Id != share.Id {
-			lambda = this.updateLambda(share, share2, lambda)
+			lambda = tk.updateLambda(share, share2, lambda)
 		}
 	}
 	return lambda
@@ -90,14 +90,14 @@ func (this *ThresholdKey) computeLambda(share *PartialDecryption, shares []*Part
 // following property of modulo:
 // (AB) mod C = (A mod C * B mod C) mod C
 // Note, we need to combine coefficients into single c'.
-func (this *ThresholdKey) updateCprime(cprime, lambda *big.Int, share *PartialDecryption) *big.Int {
+func (tk *ThresholdKey) updateCprime(cprime, lambda *big.Int, share *PartialDecryption) *big.Int {
 	twoLambda := new(big.Int).Mul(TWO, lambda)
-	ret := this.exp(share.Decryption, twoLambda, this.GetNSquare())
+	ret := tk.exp(share.Decryption, twoLambda, tk.GetNSquare())
 	ret = new(big.Int).Mul(cprime, ret)
-	return new(big.Int).Mod(ret, this.GetNSquare())
+	return new(big.Int).Mod(ret, tk.GetNSquare())
 }
 
-func (this *ThresholdKey) exp(a, b, c *big.Int) *big.Int {
+func (tk *ThresholdKey) exp(a, b, c *big.Int) *big.Int {
 	if b.Cmp(ZERO) == -1 {
 		ret := new(big.Int).Exp(a, new(big.Int).Neg(b), c)
 		return new(big.Int).ModInverse(ret, c)
@@ -108,54 +108,54 @@ func (this *ThresholdKey) exp(a, b, c *big.Int) *big.Int {
 // Executes the last step of message decryption. Takes `cprime` value computed
 // from valid shares provided by decryption servers and multiplies this value
 // by `combineSharesContant` which is specific to the given public `ThresholdKey`.
-func (this *ThresholdKey) computeDecryption(cprime *big.Int) *big.Int {
-	l := L(cprime, this.N)
-	return new(big.Int).Mod(new(big.Int).Mul(this.combineSharesConstant(), l), this.N)
+func (tk *ThresholdKey) computeDecryption(cprime *big.Int) *big.Int {
+	l := L(cprime, tk.N)
+	return new(big.Int).Mod(new(big.Int).Mul(tk.combineSharesConstant(), l), tk.N)
 }
 
 // Combines partial decryptions provided by decryption servers and returns
 // decrypted message.
 // This function does not verify zero knowledge proofs. Returned message can be
 // incorrectly decrypted if an adversary corrupted partial decryption.
-func (this *ThresholdKey) CombinePartialDecryptions(shares []*PartialDecryption) (*big.Int, error) {
-	if err := this.makeVerificationBeforeCombiningPartialDecryptions(shares); err != nil {
+func (tk *ThresholdKey) CombinePartialDecryptions(shares []*PartialDecryption) (*big.Int, error) {
+	if err := tk.makeVerificationBeforeCombiningPartialDecryptions(shares); err != nil {
 		return nil, err
 	}
 
 	cprime := ONE
 	for _, share := range shares {
-		lambda := this.computeLambda(share, shares)
-		cprime = this.updateCprime(cprime, lambda, share)
+		lambda := tk.computeLambda(share, shares)
+		cprime = tk.updateCprime(cprime, lambda, share)
 	}
 
-	return this.computeDecryption(cprime), nil
+	return tk.computeDecryption(cprime), nil
 }
 
 // Combines partial decryptions provided by decription servers and returns
 // decrypted message.
 // Function verifies zero knowledge proofs and filters out all shares that failed
 // verification.
-func (this *ThresholdKey) CombinePartialDecryptionsZKP(shares []*PartialDecryptionZKP) (*big.Int, error) {
+func (tk *ThresholdKey) CombinePartialDecryptionsZKP(shares []*PartialDecryptionZKP) (*big.Int, error) {
 	ret := make([]*PartialDecryption, 0)
 	for _, share := range shares {
 		if share.Verify() {
 			ret = append(ret, &share.PartialDecryption)
 		}
 	}
-	return this.CombinePartialDecryptions(ret)
+	return tk.CombinePartialDecryptions(ret)
 }
 
 // Verifies if the decryption of `encryptedMessage` has been done properly.
 // It verifies all the zero-knoledge proofs, the value of the encrypted
 // and decrypted message. The method returns `nil` if everything is fine.
 // Otherwise, it returns an explicative message.
-func (this *ThresholdKey) VerifyDecryption(encryptedMessage, decryptedMessage *big.Int, shares []*PartialDecryptionZKP) error {
+func (tk *ThresholdKey) VerifyDecryption(encryptedMessage, decryptedMessage *big.Int, shares []*PartialDecryptionZKP) error {
 	for _, share := range shares {
 		if share.C.Cmp(encryptedMessage) != 0 {
 			return errors.New("The encrypted message is not the same than the one in the shares")
 		}
 	}
-	res, err := this.CombinePartialDecryptionsZKP(shares)
+	res, err := tk.CombinePartialDecryptionsZKP(shares)
 	if err != nil {
 		return err
 	}
