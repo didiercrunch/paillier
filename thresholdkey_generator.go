@@ -57,60 +57,59 @@ func GetThresholdKeyGenerator(nbits, TotalNumberOfDecryptionServers, Threshold i
 	return ret
 }
 
-func (this *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
-	return GenerateSafePrimes(this.nbits, this.Random)
+func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
+	return GenerateSafePrimes(tkg.nbits, tkg.Random)
 }
 
-func (this *ThresholdKeyGenerator) initPandP1() error {
+func (tkg *ThresholdKeyGenerator) initPandP1() error {
 	var err error
-	this.p, this.p1, err = this.generateSafePrimes()
+	tkg.p, tkg.p1, err = tkg.generateSafePrimes()
 	return err
 }
 
-func (this *ThresholdKeyGenerator) initQandQ1() error {
+func (tkg *ThresholdKeyGenerator) initQandQ1() error {
 	var err error
-	this.q, this.q1, err = this.generateSafePrimes()
+	tkg.q, tkg.q1, err = tkg.generateSafePrimes()
 	return err
 }
 
-func (this *ThresholdKeyGenerator) initShortcuts() {
-	this.n = new(big.Int).Mul(this.p, this.q)
-	this.m = new(big.Int).Mul(this.p1, this.q1)
-	this.nSquare = new(big.Int).Mul(this.n, this.n)
-	this.nm = new(big.Int).Mul(this.n, this.m)
-
+func (tkg *ThresholdKeyGenerator) initShortcuts() {
+	tkg.n = new(big.Int).Mul(tkg.p, tkg.q)
+	tkg.m = new(big.Int).Mul(tkg.p1, tkg.q1)
+	tkg.nSquare = new(big.Int).Mul(tkg.n, tkg.n)
+	tkg.nm = new(big.Int).Mul(tkg.n, tkg.m)
 }
 
-func (this *ThresholdKeyGenerator) arePsAndQsGood() bool {
-	if this.p.Cmp(this.q) == 0 {
+func (tkg *ThresholdKeyGenerator) arePsAndQsGood() bool {
+	if tkg.p.Cmp(tkg.q) == 0 {
 		return false
 	}
-	if this.p.Cmp(this.q1) == 0 {
+	if tkg.p.Cmp(tkg.q1) == 0 {
 		return false
 	}
-	if this.p1.Cmp(this.q) == 0 {
+	if tkg.p1.Cmp(tkg.q) == 0 {
 		return false
 	}
 	return true
 }
 
-func (this *ThresholdKeyGenerator) initPsAndQs() error {
-	if err := this.initPandP1(); err != nil {
+func (tkg *ThresholdKeyGenerator) initPsAndQs() error {
+	if err := tkg.initPandP1(); err != nil {
 		return err
 	}
-	if err := this.initQandQ1(); err != nil {
+	if err := tkg.initQandQ1(); err != nil {
 		return err
 	}
-	if !this.arePsAndQsGood() {
-		return this.initPsAndQs()
+	if !tkg.arePsAndQsGood() {
+		return tkg.initPsAndQs()
 	}
 	return nil
 }
 
 // v generates a cyclic group of squares in Zn^2.
-func (this *ThresholdKeyGenerator) computeV() error {
+func (tkg *ThresholdKeyGenerator) computeV() error {
 	var err error
-	this.v, err = GetRandomGeneratorOfTheQuadraticResidue(this.nSquare, this.Random)
+	tkg.v, err = GetRandomGeneratorOfTheQuadraticResidue(tkg.nSquare, tkg.Random)
 	return err
 }
 
@@ -138,18 +137,18 @@ func (this *ThresholdKeyGenerator) computeV() error {
 // z2 = m^-1 mod n
 //
 // x = a2*y2*z2 = 1 * m * [m^-1 mod n]
-func (this *ThresholdKeyGenerator) initD() {
-	mInverse := new(big.Int).ModInverse(this.m, this.n)
-	this.d = new(big.Int).Mul(mInverse, this.m)
+func (tkg *ThresholdKeyGenerator) initD() {
+	mInverse := new(big.Int).ModInverse(tkg.m, tkg.n)
+	tkg.d = new(big.Int).Mul(mInverse, tkg.m)
 }
 
-func (this *ThresholdKeyGenerator) initNumerialValues() error {
-	if err := this.initPsAndQs(); err != nil {
+func (tkg *ThresholdKeyGenerator) initNumerialValues() error {
+	if err := tkg.initPsAndQs(); err != nil {
 		return err
 	}
-	this.initShortcuts()
-	this.initD()
-	return this.computeV()
+	tkg.initShortcuts()
+	tkg.initD()
+	return tkg.computeV()
 }
 
 // f(X) = a_0 X^0 + a_1 X^1 + ... + a_(w-1) X^(w-1)
@@ -158,12 +157,12 @@ func (this *ThresholdKeyGenerator) initNumerialValues() error {
 // `w` - threshold
 // `a_i` - random value from {0, ... nm - 1} for 0<i<w
 // `a_0` is always equal `d`
-func (this *ThresholdKeyGenerator) generateHidingPolynomial() error {
-	this.polynomialCoefficients = make([]*big.Int, this.Threshold)
-	this.polynomialCoefficients[0] = this.d
+func (tkg *ThresholdKeyGenerator) generateHidingPolynomial() error {
+	tkg.polynomialCoefficients = make([]*big.Int, tkg.Threshold)
+	tkg.polynomialCoefficients[0] = tkg.d
 	var err error
-	for i := 1; i < this.Threshold; i++ {
-		this.polynomialCoefficients[i], err = rand.Int(this.Random, this.nm)
+	for i := 1; i < tkg.Threshold; i++ {
+		tkg.polynomialCoefficients[i], err = rand.Int(tkg.Random, tkg.nm)
 		if err != nil {
 			return err
 		}
@@ -173,28 +172,28 @@ func (this *ThresholdKeyGenerator) generateHidingPolynomial() error {
 
 // The secred share of the i'th authority is `f(i) mod nm`, where `f` is
 // the polynomial we generated in `GenerateHidingPolynomial` function.
-func (this *ThresholdKeyGenerator) computeShare(index int) *big.Int {
+func (tkg *ThresholdKeyGenerator) computeShare(index int) *big.Int {
 	share := big.NewInt(0)
-	for i := 0; i < this.Threshold; i++ {
-		a := this.polynomialCoefficients[i]
+	for i := 0; i < tkg.Threshold; i++ {
+		a := tkg.polynomialCoefficients[i]
 		// we index authorities from 1, that's why we do index+1 here
 		b := new(big.Int).Exp(big.NewInt(int64(index+1)), big.NewInt(int64(i)), nil)
 		tmp := new(big.Int).Mul(a, b)
 		share = new(big.Int).Add(share, tmp)
 	}
-	return new(big.Int).Mod(share, this.nm)
+	return new(big.Int).Mod(share, tkg.nm)
 }
 
-func (this *ThresholdKeyGenerator) createShares() []*big.Int {
-	shares := make([]*big.Int, this.TotalNumberOfDecryptionServers)
-	for i := 0; i < this.TotalNumberOfDecryptionServers; i++ {
-		shares[i] = this.computeShare(i)
+func (tkg *ThresholdKeyGenerator) createShares() []*big.Int {
+	shares := make([]*big.Int, tkg.TotalNumberOfDecryptionServers)
+	for i := 0; i < tkg.TotalNumberOfDecryptionServers; i++ {
+		shares[i] = tkg.computeShare(i)
 	}
 	return shares
 }
 
-func (this *ThresholdKeyGenerator) delta() *big.Int {
-	return Factorial(this.TotalNumberOfDecryptionServers)
+func (tkg *ThresholdKeyGenerator) delta() *big.Int {
+	return Factorial(tkg.TotalNumberOfDecryptionServers)
 }
 
 // Generates verification keys for actions of decryption servers.
@@ -206,45 +205,45 @@ func (this *ThresholdKeyGenerator) delta() *big.Int {
 // `l` is the number of decryption servers
 // `s_i` is a secret share for server `i`.
 // Secret shares were previously generated in the `CrateShares` function.
-func (this *ThresholdKeyGenerator) createViArray(shares []*big.Int) (viArray []*big.Int) {
+func (tkg *ThresholdKeyGenerator) createViArray(shares []*big.Int) (viArray []*big.Int) {
 	viArray = make([]*big.Int, len(shares))
-	delta := this.delta()
+	delta := tkg.delta()
 	for i, share := range shares {
 		tmp := new(big.Int).Mul(share, delta)
-		viArray[i] = new(big.Int).Exp(this.v, tmp, this.nSquare)
+		viArray[i] = new(big.Int).Exp(tkg.v, tmp, tkg.nSquare)
 	}
 	return viArray
 }
 
-func (this *ThresholdKeyGenerator) createPrivateKey(i int, share *big.Int, viArray []*big.Int) *ThresholdPrivateKey {
+func (tkg *ThresholdKeyGenerator) createPrivateKey(i int, share *big.Int, viArray []*big.Int) *ThresholdPrivateKey {
 	ret := new(ThresholdPrivateKey)
-	ret.N = this.n
-	ret.V = this.v
+	ret.N = tkg.n
+	ret.V = tkg.v
 
-	ret.TotalNumberOfDecryptionServers = this.TotalNumberOfDecryptionServers
-	ret.Threshold = this.Threshold
+	ret.TotalNumberOfDecryptionServers = tkg.TotalNumberOfDecryptionServers
+	ret.Threshold = tkg.Threshold
 	ret.Share = share
 	ret.Id = i + 1
 	ret.Vi = viArray
 	return ret
 }
 
-func (this *ThresholdKeyGenerator) createPrivateKeys() []*ThresholdPrivateKey {
-	shares := this.createShares()
-	viArray := this.createViArray(shares)
-	ret := make([]*ThresholdPrivateKey, this.TotalNumberOfDecryptionServers)
-	for i := 0; i < this.TotalNumberOfDecryptionServers; i++ {
-		ret[i] = this.createPrivateKey(i, shares[i], viArray)
+func (tkg *ThresholdKeyGenerator) createPrivateKeys() []*ThresholdPrivateKey {
+	shares := tkg.createShares()
+	viArray := tkg.createViArray(shares)
+	ret := make([]*ThresholdPrivateKey, tkg.TotalNumberOfDecryptionServers)
+	for i := 0; i < tkg.TotalNumberOfDecryptionServers; i++ {
+		ret[i] = tkg.createPrivateKey(i, shares[i], viArray)
 	}
 	return ret
 }
 
-func (this *ThresholdKeyGenerator) Generate() ([]*ThresholdPrivateKey, error) {
-	if err := this.initNumerialValues(); err != nil {
+func (tkg *ThresholdKeyGenerator) Generate() ([]*ThresholdPrivateKey, error) {
+	if err := tkg.initNumerialValues(); err != nil {
 		return nil, err
 	}
-	if err := this.generateHidingPolynomial(); err != nil {
+	if err := tkg.generateHidingPolynomial(); err != nil {
 		return nil, err
 	}
-	return this.createPrivateKeys(), nil
+	return tkg.createPrivateKeys(), nil
 }
