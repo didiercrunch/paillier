@@ -331,37 +331,37 @@ type PartialDecryptionZKP struct {
 	C   *big.Int      // the input cypher text
 }
 
-func (this *PartialDecryptionZKP) verifyPart1() *big.Int {
-	c4 := new(big.Int).Exp(this.C, FOUR, nil)                  // c^4
-	decryption2 := new(big.Int).Exp(this.Decryption, TWO, nil) // c_i^2
+func (pd *PartialDecryptionZKP) verifyPart1() *big.Int {
+	c4 := new(big.Int).Exp(pd.C, FOUR, nil)                  // c^4
+	decryption2 := new(big.Int).Exp(pd.Decryption, TWO, nil) // c_i^2
 
-	a1 := new(big.Int).Exp(c4, this.Z, this.Key.GetNSquare())          // (c^4)^Z
-	a2 := new(big.Int).Exp(decryption2, this.E, this.Key.GetNSquare()) // (c_i^2)^E
-	a2 = new(big.Int).ModInverse(a2, this.Key.GetNSquare())
-	a := new(big.Int).Mod(new(big.Int).Mul(a1, a2), this.Key.GetNSquare())
+	a1 := new(big.Int).Exp(c4, pd.Z, pd.Key.GetNSquare())          // (c^4)^Z
+	a2 := new(big.Int).Exp(decryption2, pd.E, pd.Key.GetNSquare()) // (c_i^2)^E
+	a2 = new(big.Int).ModInverse(a2, pd.Key.GetNSquare())
+	a := new(big.Int).Mod(new(big.Int).Mul(a1, a2), pd.Key.GetNSquare())
 	return a
 }
 
-func (this *PartialDecryptionZKP) verifyPart2() *big.Int {
-	vi := this.Key.Vi[this.Id-1]                                      // servers are indexed from 1
-	b1 := new(big.Int).Exp(this.Key.V, this.Z, this.Key.GetNSquare()) // V^Z
-	b2 := new(big.Int).Exp(vi, this.E, this.Key.GetNSquare())         // (v_i)^E
-	b2 = new(big.Int).ModInverse(b2, this.Key.GetNSquare())
-	b := new(big.Int).Mod(new(big.Int).Mul(b1, b2), this.Key.GetNSquare())
+func (pd *PartialDecryptionZKP) verifyPart2() *big.Int {
+	vi := pd.Key.Vi[pd.Id-1]                                    // servers are indexed from 1
+	b1 := new(big.Int).Exp(pd.Key.V, pd.Z, pd.Key.GetNSquare()) // V^Z
+	b2 := new(big.Int).Exp(vi, pd.E, pd.Key.GetNSquare())       // (v_i)^E
+	b2 = new(big.Int).ModInverse(b2, pd.Key.GetNSquare())
+	b := new(big.Int).Mod(new(big.Int).Mul(b1, b2), pd.Key.GetNSquare())
 	return b
 }
 
-func (this *PartialDecryptionZKP) Verify() bool {
-	a := this.verifyPart1()
-	b := this.verifyPart2()
+func (pd *PartialDecryptionZKP) Verify() bool {
+	a := pd.verifyPart1()
+	b := pd.verifyPart2()
 	hash := sha256.New()
 	hash.Write(a.Bytes())
 	hash.Write(b.Bytes())
-	c4 := new(big.Int).Exp(this.C, FOUR, nil)
+	c4 := new(big.Int).Exp(pd.C, FOUR, nil)
 	hash.Write(c4.Bytes())
-	ci2 := new(big.Int).Exp(this.Decryption, TWO, nil)
+	ci2 := new(big.Int).Exp(pd.Decryption, TWO, nil)
 	hash.Write(ci2.Bytes())
 
 	expectedE := new(big.Int).SetBytes(hash.Sum([]byte{}))
-	return this.E.Cmp(expectedE) == 0
+	return pd.E.Cmp(expectedE) == 0
 }
