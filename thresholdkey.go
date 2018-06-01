@@ -278,16 +278,29 @@ type PartialDecryption struct {
 // (`ThresholdPrivateKey.Share`) by comparison with the public verification key
 // (`ThresholdKey.Vi`). Recall that v_i = v^(delta s_i).
 //
+// The Fiat-Shamir is a non-interactive proof of knowledge heuristic.
+// The general algorithm is as follows:
+//
+// - Alice wants to prove that she knows x: the discrete logarithm of y = g^x
+//   to the base g
+// - Alice picks a random r from Z_q and computes t = g^r
+// - Alice computes E = H(t, g, y), where H is a cryptographic hash function
+// - Alice computes Z = Ex + r.
+//   The resulting proof is the pair (t, Z).
+// - Anyone can check whether t = g^Z y^E (mod q)
+//
+// In our case:
+//
+// Decryption server i wants to prove that he indeed raised the cyphertext to
+// his secret exponent s_i during partial decryption.
 // This is essentialy a protocol for the equality of discrete logs,
 // log_{c^4}(c_i^2) = log_v(v_i).
 //
-// The Fiat-Shamir scheme works as follows in our case:
-//
 // ZKP construction
 //
-// - Pick random r
+// - Pick random r mod n
 // - Compute E as:
-//   E = HASH(a, b, c^4, c_i^2 ), where
+//   E = HASH(a, b, c^4, c_i^2), where
 //     a = (c^4)^r mod n^2
 //     b = V^r mod n^2
 //     c is a cyphertext,
@@ -308,7 +321,7 @@ type PartialDecryption struct {
 //   b = b1 * b2 mod n^2
 //   b1 = V^Z
 //   b2 = [ v_i^E ] -1 mod n^2
-// - Rehash H(a, b, c^4, c_i)
+// - Rehash H(a, b, c^4, c_i^2)
 // - Compare ZKP hash with the one just computed
 type PartialDecryptionZKP struct {
 	PartialDecryption
