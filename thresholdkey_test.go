@@ -129,16 +129,16 @@ func TestDecryptAndProduceZNP(t *testing.T) {
 func TestMakeVerificationBeforeCombiningPartialDecryptions(t *testing.T) {
 	tk := new(ThresholdPublicKey)
 	tk.Threshold = 2
-	if tk.makeVerificationBeforeCombiningPartialDecryptions([]*PartialDecryption{}) == nil {
+	if tk.verifyPartialDecryptions([]*PartialDecryption{}) == nil {
 		t.Fail()
 	}
 	prms := []*PartialDecryption{new(PartialDecryption), new(PartialDecryption)}
 	prms[1].Id = 1
-	if tk.makeVerificationBeforeCombiningPartialDecryptions(prms) != nil {
+	if tk.verifyPartialDecryptions(prms) != nil {
 		t.Fail()
 	}
 	prms[1].Id = 0
-	if tk.makeVerificationBeforeCombiningPartialDecryptions(prms) == nil {
+	if tk.verifyPartialDecryptions(prms) == nil {
 		t.Fail()
 	}
 }

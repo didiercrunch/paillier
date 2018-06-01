@@ -48,7 +48,7 @@ func (tk *ThresholdPublicKey) delta() *big.Int {
 // Checks if the number of received, unique shares is less than the
 // required threshold.
 // This method does not execute ZKP on received shares.
-func (tk *ThresholdPublicKey) makeVerificationBeforeCombiningPartialDecryptions(shares []*PartialDecryption) error {
+func (tk *ThresholdPublicKey) verifyPartialDecryptions(shares []*PartialDecryption) error {
 	if len(shares) < tk.Threshold {
 		return errors.New("Threshold not meet")
 	}
@@ -118,7 +118,7 @@ func (tk *ThresholdPublicKey) computeDecryption(cprime *big.Int) *big.Int {
 // This function does not verify zero knowledge proofs. Returned message can be
 // incorrectly decrypted if an adversary corrupted partial decryption.
 func (tk *ThresholdPublicKey) CombinePartialDecryptions(shares []*PartialDecryption) (*big.Int, error) {
-	if err := tk.makeVerificationBeforeCombiningPartialDecryptions(shares); err != nil {
+	if err := tk.verifyPartialDecryptions(shares); err != nil {
 		return nil, err
 	}
 
@@ -131,8 +131,8 @@ func (tk *ThresholdPublicKey) CombinePartialDecryptions(shares []*PartialDecrypt
 	return tk.computeDecryption(cprime), nil
 }
 
-// Combines partial decryptions provided by decription servers and returns
-// decrypted message.
+// Combines partial decryptions provided by decryption servers and returns
+// full decrypted message.
 // Function verifies zero knowledge proofs and filters out all shares that failed
 // verification.
 func (tk *ThresholdPublicKey) CombinePartialDecryptionsZKP(shares []*PartialDecryptionZKP) (*big.Int, error) {
