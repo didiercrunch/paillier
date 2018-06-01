@@ -81,7 +81,7 @@ func TestGetBSONEmptyKey(t *testing.T) {
 
 func TestPartialDecryptionZKPJsonification(t *testing.T) {
 	pd := new(PartialDecryptionZKP)
-	pd.Key = new(ThresholdKey)
+	pd.Key = new(ThresholdPublicKey)
 	pd.Key.Threshold = 98
 	pd.Key.TotalNumberOfDecryptionServers = 230
 	pd.Id = 1
@@ -99,7 +99,7 @@ func TestPartialDecryptionZKPJsonification(t *testing.T) {
 
 func TestPartialDecryptionZKPBSONification(t *testing.T) {
 	pd := new(PartialDecryptionZKP)
-	pd.Key = new(ThresholdKey)
+	pd.Key = new(ThresholdPublicKey)
 	pd.Key.Threshold = 98
 	pd.Key.TotalNumberOfDecryptionServers = 230
 	pd.Id = 1
@@ -116,12 +116,12 @@ func TestPartialDecryptionZKPBSONification(t *testing.T) {
 }
 
 func TestThresholdKeyBSON(t *testing.T) {
-	key := &ThresholdKey{
+	key := &ThresholdPublicKey{
 		PublicKey:                      PublicKey{b(9)},
 		TotalNumberOfDecryptionServers: 7,
 		Threshold:                      6,
 		V:                              b(3),
 		Vi:                             []*big.Int{b(2), b(34)},
 	}
-	AssertBSONIsGood(key, new(ThresholdKey), t)
+	AssertBSONIsGood(key, new(ThresholdPublicKey), t)
 }

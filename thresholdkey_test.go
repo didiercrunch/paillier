@@ -17,7 +17,7 @@ func getThresholdPrivateKey() *ThresholdPrivateKey {
 }
 
 func TestDelta(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.TotalNumberOfDecryptionServers = 6
 	if delta := tk.delta(); 720 != n(delta) {
 		t.Error("Delta is not 720 but", delta)
@@ -25,7 +25,7 @@ func TestDelta(t *testing.T) {
 }
 
 func TestCombineSharesConstant(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.N = big.NewInt(101 * 103)
 	tk.TotalNumberOfDecryptionServers = 6
 
@@ -84,7 +84,7 @@ func TestDecryptWithThresholdKey(t *testing.T) {
 
 func TestVerifyPart1(t *testing.T) {
 	pd := new(PartialDecryptionZKP)
-	pd.Key = new(ThresholdKey)
+	pd.Key = new(ThresholdPublicKey)
 	pd.Key.N = b(131)
 	pd.Decryption = b(101)
 	pd.C = b(99)
@@ -98,7 +98,7 @@ func TestVerifyPart1(t *testing.T) {
 
 func TestVerifyPart2(t *testing.T) {
 	pd := new(PartialDecryptionZKP)
-	pd.Key = new(ThresholdKey)
+	pd.Key = new(ThresholdPublicKey)
 	pd.Id = 1
 	pd.Key.Vi = []*big.Int{b(77), b(67)} // vi is 67
 	pd.Key.N = b(131)
@@ -127,7 +127,7 @@ func TestDecryptAndProduceZNP(t *testing.T) {
 }
 
 func TestMakeVerificationBeforeCombiningPartialDecryptions(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.Threshold = 2
 	if tk.makeVerificationBeforeCombiningPartialDecryptions([]*PartialDecryption{}) == nil {
 		t.Fail()
@@ -144,7 +144,7 @@ func TestMakeVerificationBeforeCombiningPartialDecryptions(t *testing.T) {
 }
 
 func TestUpdateLambda(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	lambda := b(11)
 	share1 := &PartialDecryption{3, b(5)}
 	share2 := &PartialDecryption{7, b(3)}
@@ -155,7 +155,7 @@ func TestUpdateLambda(t *testing.T) {
 }
 
 func TestupdateCprime(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.N = b(99)
 	cprime := b(77)
 	lambda := b(52)
@@ -238,7 +238,7 @@ func TestDecryption(t *testing.T) {
 	// test the correct decryption of '100'.
 	share1 := &PartialDecryption{1, b(384111638639)}
 	share2 := &PartialDecryption{2, b(235243761043)}
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.Threshold = 2
 	tk.TotalNumberOfDecryptionServers = 2
 	tk.N = b(637753)
@@ -325,7 +325,7 @@ func TestVerifyDecryption(t *testing.T) {
 	tkh := GetThresholdKeyGenerator(10, 2, 2, rand.Reader)
 	tpks, err := tkh.Generate()
 
-	pk := &tpks[0].ThresholdKey
+	pk := &tpks[0].ThresholdPublicKey
 	if err != nil {
 		t.Error(err)
 	}

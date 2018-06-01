@@ -59,7 +59,7 @@ type dbThresholdKey struct {
 	N                              string
 }
 
-func (this *dbThresholdKey) FromThresholdKey(key *ThresholdKey) {
+func (this *dbThresholdKey) FromThresholdPublicKey(key *ThresholdPublicKey) {
 	this.TotalNumberOfDecryptionServers = key.TotalNumberOfDecryptionServers
 	this.Threshold = key.Threshold
 	this.V = fmt.Sprintf("%x", key.V)
@@ -70,7 +70,7 @@ func (this *dbThresholdKey) FromThresholdKey(key *ThresholdKey) {
 	}
 }
 
-func (this *dbThresholdKey) ToThresholdKey(key *ThresholdKey) error {
+func (this *dbThresholdKey) ToThresholdPublicKey(key *ThresholdPublicKey) error {
 	key.TotalNumberOfDecryptionServers = this.TotalNumberOfDecryptionServers
 	key.Threshold = this.Threshold
 	oks := make([]bool, 2)
@@ -91,18 +91,18 @@ func (this *dbThresholdKey) ToThresholdKey(key *ThresholdKey) error {
 	return nil
 }
 
-func (this *ThresholdKey) GetBSON() (interface{}, error) {
+func (this *ThresholdPublicKey) GetBSON() (interface{}, error) {
 	r := new(dbThresholdKey)
-	r.FromThresholdKey(this)
+	r.FromThresholdPublicKey(this)
 	return r, nil
 }
 
-func (this *ThresholdKey) SetBSON(raw bson.Raw) error {
+func (this *ThresholdPublicKey) SetBSON(raw bson.Raw) error {
 	r := new(dbThresholdKey)
 	if err := raw.Unmarshal(r); err != nil {
 		return err
 	}
-	return r.ToThresholdKey(this)
+	return r.ToThresholdPublicKey(this)
 }
 
 type dbPrivateKey struct {
@@ -175,7 +175,7 @@ func (this *dbPartialDecryptionZKP) FromPartialDecryptionZKP(pd *PartialDecrypti
 }
 
 func (this *dbPartialDecryptionZKP) ToPartialDecryptionZKP(pd *PartialDecryptionZKP) error {
-	pd.Key = new(ThresholdKey)
+	pd.Key = new(ThresholdPublicKey)
 
 	var oks = make([]bool, 6)
 
