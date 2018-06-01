@@ -176,40 +176,40 @@ type ThresholdPrivateKey struct {
 }
 
 // Decrypts the cypher text and returns the partial decryption
-func (this *ThresholdPrivateKey) Decrypt(c *big.Int) *PartialDecryption {
+func (tpk *ThresholdPrivateKey) Decrypt(c *big.Int) *PartialDecryption {
 	ret := new(PartialDecryption)
-	ret.Id = this.Id
-	exp := new(big.Int).Mul(this.Share, new(big.Int).Mul(TWO, this.delta()))
-	ret.Decryption = new(big.Int).Exp(c, exp, this.GetNSquare())
+	ret.Id = tpk.Id
+	exp := new(big.Int).Mul(tpk.Share, new(big.Int).Mul(TWO, tpk.delta()))
+	ret.Decryption = new(big.Int).Exp(c, exp, tpk.GetNSquare())
 
 	return ret
 }
 
-func (this *ThresholdPrivateKey) copyVi() []*big.Int {
-	ret := make([]*big.Int, len(this.Vi))
-	for i, vi := range this.Vi {
+func (tpk *ThresholdPrivateKey) copyVi() []*big.Int {
+	ret := make([]*big.Int, len(tpk.Vi))
+	for i, vi := range tpk.Vi {
 		ret[i] = new(big.Int).Add(vi, big.NewInt(0))
 	}
 	return ret
 }
 
-func (this *ThresholdPrivateKey) getThresholdKey() *ThresholdKey {
+func (tpk *ThresholdPrivateKey) getThresholdKey() *ThresholdKey {
 	ret := new(ThresholdKey)
-	ret.Threshold = this.Threshold
-	ret.TotalNumberOfDecryptionServers = this.TotalNumberOfDecryptionServers
-	ret.V = new(big.Int).Add(this.V, big.NewInt(0))
-	ret.Vi = this.copyVi()
-	ret.N = new(big.Int).Add(this.N, big.NewInt(0))
+	ret.Threshold = tpk.Threshold
+	ret.TotalNumberOfDecryptionServers = tpk.TotalNumberOfDecryptionServers
+	ret.V = new(big.Int).Add(tpk.V, big.NewInt(0))
+	ret.Vi = tpk.copyVi()
+	ret.N = new(big.Int).Add(tpk.N, big.NewInt(0))
 	return ret
 }
 
-func (this *ThresholdPrivateKey) computeZ(r, e *big.Int) *big.Int {
-	tmp := new(big.Int).Mul(e, this.delta())
-	tmp = new(big.Int).Mul(tmp, this.Share)
+func (tpk *ThresholdPrivateKey) computeZ(r, e *big.Int) *big.Int {
+	tmp := new(big.Int).Mul(e, tpk.delta())
+	tmp = new(big.Int).Mul(tmp, tpk.Share)
 	return new(big.Int).Add(r, tmp)
 }
 
-func (this *ThresholdPrivateKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
+func (tpk *ThresholdPrivateKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
 	hash := sha256.New()
 	hash.Write(a.Bytes())
 	hash.Write(b.Bytes())
@@ -218,47 +218,47 @@ func (this *ThresholdPrivateKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
 	return new(big.Int).SetBytes(hash.Sum([]byte{}))
 }
 
-func (this *ThresholdPrivateKey) DecryptAndProduceZNP(c *big.Int, random io.Reader) (*PartialDecryptionZKP, error) {
+func (tpk *ThresholdPrivateKey) DecryptAndProduceZNP(c *big.Int, random io.Reader) (*PartialDecryptionZKP, error) {
 	pd := new(PartialDecryptionZKP)
-	pd.Key = this.getThresholdKey()
+	pd.Key = tpk.getThresholdKey()
 	pd.C = c
-	pd.Id = this.Id
-	pd.Decryption = this.Decrypt(c).Decryption
+	pd.Id = tpk.Id
+	pd.Decryption = tpk.Decrypt(c).Decryption
 
 	// choose random number
-	r, err := rand.Int(random, this.GetNSquare())
+	r, err := rand.Int(random, tpk.GetNSquare())
 	if err != nil {
 		return nil, err
 	}
 	//  compute a
 	c4 := new(big.Int).Exp(c, FOUR, nil)
-	a := new(big.Int).Exp(c4, r, this.GetNSquare())
+	a := new(big.Int).Exp(c4, r, tpk.GetNSquare())
 
 	// compute b
-	b := new(big.Int).Exp(this.V, r, this.GetNSquare())
+	b := new(big.Int).Exp(tpk.V, r, tpk.GetNSquare())
 
 	// compute hash
 	ci2 := new(big.Int).Exp(pd.Decryption, big.NewInt(2), nil)
 
-	pd.E = this.computeHash(a, b, c4, ci2)
+	pd.E = tpk.computeHash(a, b, c4, ci2)
 
-	pd.Z = this.computeZ(r, pd.E)
+	pd.Z = tpk.computeZ(r, pd.E)
 
 	return pd, nil
 }
 
 // Verifies if the partial decryption key is well formed.  If well formed,
 // the method return nil else an explicative error is returned.
-func (this *ThresholdPrivateKey) Validate(random io.Reader) error {
-	m, err := rand.Int(random, this.N)
+func (tpk *ThresholdPrivateKey) Validate(random io.Reader) error {
+	m, err := rand.Int(random, tpk.N)
 	if err != nil {
 		return err
 	}
-	c, err := this.Encrypt(m, random)
+	c, err := tpk.Encrypt(m, random)
 	if err != nil {
 		return err
 	}
-	proof, err := this.DecryptAndProduceZNP(c.C, random)
+	proof, err := tpk.DecryptAndProduceZNP(c.C, random)
 	if err != nil {
 		return err
 	}
