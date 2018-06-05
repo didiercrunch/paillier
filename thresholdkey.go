@@ -97,8 +97,14 @@ func (tk *ThresholdPublicKey) updateCprime(cprime, lambda *big.Int, share *Parti
 	return new(big.Int).Mod(ret, tk.GetNSquare())
 }
 
+// We use `exp` from `updateCprime` to raise decryption share to the power of lambda
+// parameter. Since lambda can be a negative number and we do discrete math here,
+// we need to apply multiplicative inverse modulo in this case.
+//
+// For instance, for b = -18:
+// b^{−18} = (b^−1)^18, where b^{−1} is the multiplicative inverse modulo c.
 func (tk *ThresholdPublicKey) exp(a, b, c *big.Int) *big.Int {
-	if b.Cmp(ZERO) == -1 {
+	if b.Cmp(ZERO) == -1 { // b < 0 ?
 		ret := new(big.Int).Exp(a, new(big.Int).Neg(b), c)
 		return new(big.Int).ModInverse(ret, c)
 	}

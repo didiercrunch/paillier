@@ -24,6 +24,22 @@ func TestDelta(t *testing.T) {
 	}
 }
 
+func TestExp(t *testing.T) {
+	tk := new(ThresholdPublicKey)
+
+	if exp := tk.exp(big.NewInt(720), big.NewInt(10), big.NewInt(49)); 43 != n(exp) {
+		t.Error("Unexpected exponent. Expected 43 but got", exp)
+	}
+
+	if exp := tk.exp(big.NewInt(720), big.NewInt(0), big.NewInt(49)); 1 != n(exp) {
+		t.Error("Unexpected exponent. Expected 0 but got", exp)
+	}
+
+	if exp := tk.exp(big.NewInt(720), big.NewInt(-10), big.NewInt(49)); 8 != n(exp) {
+		t.Error("Unexpected exponent. Expected 8 but got", exp)
+	}
+}
+
 func TestCombineSharesConstant(t *testing.T) {
 	tk := new(ThresholdPublicKey)
 	tk.N = big.NewInt(101 * 103)
