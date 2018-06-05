@@ -37,6 +37,9 @@ func (pub *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
 	}
 	nSquare := pub.GetNSquare()
 
+	// g is _always_ equal n+1
+	// Threshold encryption is safe only for g=n+1 choice.
+	// See [DJN 10], section 5.1
 	g := new(big.Int).Add(pub.N, big.NewInt(1))
 	gm := new(big.Int).Exp(g, m, nSquare)
 	rn := new(big.Int).Exp(r, pub.N, nSquare)
@@ -45,6 +48,9 @@ func (pub *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
 
 // Takes two cypher texts and returns a 3rd one that encode
 // the sum of the two plain texts.
+//
+// It's possible because Paillier is a homomorphic encryption scheme, where
+// E(m1) * E(m2) = E(m1 + m2)
 func (this *PublicKey) Add(cypher1, cypher2 *Cypher) *Cypher {
 	m := new(big.Int).Mul(cypher1.C, cypher2.C)
 	return &Cypher{new(big.Int).Mod(m, this.GetNSquare())}

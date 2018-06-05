@@ -57,28 +57,25 @@ type dbThresholdKey struct {
 	V                              string
 	Vi                             []string
 	N                              string
-	G                              string
 }
 
-func (this *dbThresholdKey) FromThresholdKey(key *ThresholdKey) {
+func (this *dbThresholdKey) FromThresholdPublicKey(key *ThresholdPublicKey) {
 	this.TotalNumberOfDecryptionServers = key.TotalNumberOfDecryptionServers
 	this.Threshold = key.Threshold
 	this.V = fmt.Sprintf("%x", key.V)
 	this.N = fmt.Sprintf("%x", key.N)
-	this.G = fmt.Sprintf("%x", key.G)
 	this.Vi = make([]string, len(key.Vi))
 	for i, vi := range key.Vi {
 		this.Vi[i] = fmt.Sprintf("%x", vi)
 	}
 }
 
-func (this *dbThresholdKey) ToThresholdKey(key *ThresholdKey) error {
+func (this *dbThresholdKey) ToThresholdPublicKey(key *ThresholdPublicKey) error {
 	key.TotalNumberOfDecryptionServers = this.TotalNumberOfDecryptionServers
 	key.Threshold = this.Threshold
-	oks := make([]bool, 3)
+	oks := make([]bool, 2)
 	key.V, oks[0] = new(big.Int).SetString(this.V, 16)
 	key.N, oks[1] = new(big.Int).SetString(this.N, 16)
-	key.G, oks[2] = new(big.Int).SetString(this.G, 16)
 	if !all(oks) {
 		return errors.New("not hexadecimal")
 	}
@@ -94,23 +91,22 @@ func (this *dbThresholdKey) ToThresholdKey(key *ThresholdKey) error {
 	return nil
 }
 
-func (this *ThresholdKey) GetBSON() (interface{}, error) {
+func (this *ThresholdPublicKey) GetBSON() (interface{}, error) {
 	r := new(dbThresholdKey)
-	r.FromThresholdKey(this)
+	r.FromThresholdPublicKey(this)
 	return r, nil
 }
 
-func (this *ThresholdKey) SetBSON(raw bson.Raw) error {
+func (this *ThresholdPublicKey) SetBSON(raw bson.Raw) error {
 	r := new(dbThresholdKey)
 	if err := raw.Unmarshal(r); err != nil {
 		return err
 	}
-	return r.ToThresholdKey(this)
+	return r.ToThresholdPublicKey(this)
 }
 
 type dbPrivateKey struct {
 	N      string `bson:",omitempty"`
-	G      string `bson:",omitempty"`
 	Lambda string `bson:",omitempty"`
 	Mu     string `bson:",omitempty"`
 }
@@ -154,7 +150,6 @@ type dbPartialDecryptionZKP struct {
 	E                              string   `json:"e"`
 	C                              string   `json:"c"`
 	V                              string   `json:"v"`
-	G                              string   `json:"g"`
 	N                              string   `json:"n"`
 	Vi                             []string `json:"vi"`
 	Decryption                     string   `json:"decryption"`
@@ -169,7 +164,6 @@ func (this *dbPartialDecryptionZKP) FromPartialDecryptionZKP(pd *PartialDecrypti
 	this.Threshold = pd.Key.Threshold
 	this.Z = fmt.Sprintf("%x", pd.Z)
 	this.E = fmt.Sprintf("%x", pd.E)
-	this.G = fmt.Sprintf("%x", pd.Key.G)
 	this.N = fmt.Sprintf("%x", pd.Key.N)
 	this.C = fmt.Sprintf("%x", pd.C)
 	this.V = fmt.Sprintf("%x", pd.Key.V)
@@ -181,9 +175,9 @@ func (this *dbPartialDecryptionZKP) FromPartialDecryptionZKP(pd *PartialDecrypti
 }
 
 func (this *dbPartialDecryptionZKP) ToPartialDecryptionZKP(pd *PartialDecryptionZKP) error {
-	pd.Key = new(ThresholdKey)
+	pd.Key = new(ThresholdPublicKey)
 
-	var oks = make([]bool, 7)
+	var oks = make([]bool, 6)
 
 	pd.Id = this.Id
 	pd.Key.TotalNumberOfDecryptionServers = this.TotalNumberOfDecryptionServers
@@ -192,9 +186,8 @@ func (this *dbPartialDecryptionZKP) ToPartialDecryptionZKP(pd *PartialDecryption
 	pd.E, oks[1] = new(big.Int).SetString(this.E, 16)
 	pd.C, oks[2] = new(big.Int).SetString(this.C, 16)
 	pd.Key.V, oks[3] = new(big.Int).SetString(this.V, 16)
-	pd.Key.G, oks[4] = new(big.Int).SetString(this.G, 16)
-	pd.Key.N, oks[5] = new(big.Int).SetString(this.N, 16)
-	pd.Decryption, oks[6] = new(big.Int).SetString(this.Decryption, 16)
+	pd.Key.N, oks[4] = new(big.Int).SetString(this.N, 16)
+	pd.Decryption, oks[5] = new(big.Int).SetString(this.Decryption, 16)
 
 	if !all(oks) {
 		fmt.Println(oks)
