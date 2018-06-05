@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func GetThresholdPrivateKey() *ThresholdPrivateKey {
+func getThresholdPrivateKey() *ThresholdPrivateKey {
 	tkh := GetThresholdKeyGenerator(32, 10, 6, rand.Reader)
 	tpks, err := tkh.Generate()
 	if err != nil {
@@ -17,19 +17,35 @@ func GetThresholdPrivateKey() *ThresholdPrivateKey {
 }
 
 func TestDelta(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.TotalNumberOfDecryptionServers = 6
-	if delta := tk.Delta(); 720 != n(delta) {
+	if delta := tk.delta(); 720 != n(delta) {
 		t.Error("Delta is not 720 but", delta)
 	}
 }
 
+func TestExp(t *testing.T) {
+	tk := new(ThresholdPublicKey)
+
+	if exp := tk.exp(big.NewInt(720), big.NewInt(10), big.NewInt(49)); 43 != n(exp) {
+		t.Error("Unexpected exponent. Expected 43 but got", exp)
+	}
+
+	if exp := tk.exp(big.NewInt(720), big.NewInt(0), big.NewInt(49)); 1 != n(exp) {
+		t.Error("Unexpected exponent. Expected 0 but got", exp)
+	}
+
+	if exp := tk.exp(big.NewInt(720), big.NewInt(-10), big.NewInt(49)); 8 != n(exp) {
+		t.Error("Unexpected exponent. Expected 8 but got", exp)
+	}
+}
+
 func TestCombineSharesConstant(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.N = big.NewInt(101 * 103)
 	tk.TotalNumberOfDecryptionServers = 6
 
-	if c := tk.CombineSharesConstant(); !reflect.DeepEqual(big.NewInt(4558), c) {
+	if c := tk.combineSharesConstant(); !reflect.DeepEqual(big.NewInt(4558), c) {
 		t.Error("wrong combined key.  ", c)
 	}
 }
@@ -66,7 +82,7 @@ func TestCopyVi(t *testing.T) {
 }
 
 func TestEncryptWithThresholdKey(t *testing.T) {
-	pd := GetThresholdPrivateKey()
+	pd := getThresholdPrivateKey()
 	_, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Fail()
@@ -74,7 +90,7 @@ func TestEncryptWithThresholdKey(t *testing.T) {
 }
 
 func TestDecryptWithThresholdKey(t *testing.T) {
-	pd := GetThresholdPrivateKey()
+	pd := getThresholdPrivateKey()
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Fail()
@@ -84,7 +100,7 @@ func TestDecryptWithThresholdKey(t *testing.T) {
 
 func TestVerifyPart1(t *testing.T) {
 	pd := new(PartialDecryptionZKP)
-	pd.Key = new(ThresholdKey)
+	pd.Key = new(ThresholdPublicKey)
 	pd.Key.N = b(131)
 	pd.Decryption = b(101)
 	pd.C = b(99)
@@ -98,7 +114,7 @@ func TestVerifyPart1(t *testing.T) {
 
 func TestVerifyPart2(t *testing.T) {
 	pd := new(PartialDecryptionZKP)
-	pd.Key = new(ThresholdKey)
+	pd.Key = new(ThresholdPublicKey)
 	pd.Id = 1
 	pd.Key.Vi = []*big.Int{b(77), b(67)} // vi is 67
 	pd.Key.N = b(131)
@@ -111,16 +127,14 @@ func TestVerifyPart2(t *testing.T) {
 }
 
 func TestDecryptAndProduceZNP(t *testing.T) {
-	pd := GetThresholdPrivateKey()
+	pd := getThresholdPrivateKey()
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	znp, err := pd.DecryptAndProduceZNP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 
 	if !znp.Verify() {
@@ -129,35 +143,35 @@ func TestDecryptAndProduceZNP(t *testing.T) {
 }
 
 func TestMakeVerificationBeforeCombiningPartialDecryptions(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.Threshold = 2
-	if tk.MakeVerificationBeforeCombiningPartialDecryptions([]*PartialDecryption{}) == nil {
+	if tk.verifyPartialDecryptions([]*PartialDecryption{}) == nil {
 		t.Fail()
 	}
 	prms := []*PartialDecryption{new(PartialDecryption), new(PartialDecryption)}
 	prms[1].Id = 1
-	if tk.MakeVerificationBeforeCombiningPartialDecryptions(prms) != nil {
+	if tk.verifyPartialDecryptions(prms) != nil {
 		t.Fail()
 	}
 	prms[1].Id = 0
-	if tk.MakeVerificationBeforeCombiningPartialDecryptions(prms) == nil {
+	if tk.verifyPartialDecryptions(prms) == nil {
 		t.Fail()
 	}
 }
 
 func TestUpdateLambda(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	lambda := b(11)
 	share1 := &PartialDecryption{3, b(5)}
 	share2 := &PartialDecryption{7, b(3)}
-	res := tk.UpdateLambda(share1, share2, lambda)
+	res := tk.updateLambda(share1, share2, lambda)
 	if n(res) != 20 {
 		t.Error("wrong lambda", n(res))
 	}
 }
 
 func TestupdateCprime(t *testing.T) {
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.N = b(99)
 	cprime := b(77)
 	lambda := b(52)
@@ -174,13 +188,11 @@ func TestEncryptingDecryptingSimple(t *testing.T) {
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	message := b(100)
 	c, err := tpks[1].Encrypt(message, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	share1 := tpks[0].Decrypt(c.C)
 	message2, err := tpks[0].CombinePartialDecryptions([]*PartialDecryption{share1})
@@ -197,13 +209,11 @@ func TestEncryptingDecrypting(t *testing.T) {
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	message := b(100)
 	c, err := tpks[1].Encrypt(message, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	share1 := tpks[0].Decrypt(c.C)
 	share2 := tpks[1].Decrypt(c.C)
@@ -216,42 +226,48 @@ func TestEncryptingDecrypting(t *testing.T) {
 	}
 }
 
+func TestHomomorphicThresholdEncryption(t *testing.T) {
+	tkh := GetThresholdKeyGenerator(10, 2, 2, rand.Reader)
+	tpks, _ := tkh.Generate()
+
+	plainText1 := b(13)
+	plainText2 := b(19)
+
+	cypher1, _ := tpks[0].Encrypt(plainText1, rand.Reader)
+	cypher2, _ := tpks[1].Encrypt(plainText2, rand.Reader)
+
+	cypher3 := tpks[0].Add(cypher1, cypher2)
+
+	share1 := tpks[0].Decrypt(cypher3.C)
+	share2 := tpks[1].Decrypt(cypher3.C)
+
+	combined, _ := tpks[0].CombinePartialDecryptions([]*PartialDecryption{share1, share2})
+
+	expected := big.NewInt(32) // 13 + 19
+
+	if !reflect.DeepEqual(combined, expected) { // 13 + 19
+		t.Errorf("Unexpected decryption result. Expected %v but got %v", expected, combined)
+	}
+}
+
 func TestDecryption(t *testing.T) {
 	// test the correct decryption of '100'.
 	share1 := &PartialDecryption{1, b(384111638639)}
 	share2 := &PartialDecryption{2, b(235243761043)}
-	tk := new(ThresholdKey)
+	tk := new(ThresholdPublicKey)
 	tk.Threshold = 2
 	tk.TotalNumberOfDecryptionServers = 2
 	tk.N = b(637753)
-	tk.G = b(637754)
 	tk.V = b(70661107826)
 	if msg, err := tk.CombinePartialDecryptions([]*PartialDecryption{share1, share2}); err != nil {
 		t.Error(err)
 	} else if n(msg) != 100 {
 		t.Error("decrypted message was not 100 but ", msg)
 	}
-
-}
-
-func TestDivide(t *testing.T) {
-	tk := new(ThresholdKey)
-	if r := tk.divide(b(77), b(4)); n(r) != 19 {
-		t.Error("77 / 4 != 19 ( ", r, " )")
-	}
-	if r := tk.divide(b(-77), b(-4)); n(r) != 19 {
-		t.Error("-77 / -4 != 19 ( ", r, " )")
-	}
-	if r := tk.divide(b(-77), b(4)); n(r) != -19 {
-		t.Error("-77 / 4 != -19 ( ", r, " )")
-	}
-	if r := tk.divide(b(77), b(-4)); n(r) != -19 {
-		t.Error("77 / -4 != -19 ( ", r, " )")
-	}
 }
 
 func TestValidate(t *testing.T) {
-	pk := GetThresholdPrivateKey()
+	pk := getThresholdPrivateKey()
 	if err := pk.Validate(rand.Reader); err != nil {
 		t.Error(err)
 	}
@@ -266,23 +282,19 @@ func TestCombinePartialDecryptionsZKP(t *testing.T) {
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	message := b(100)
 	c, err := tpks[1].Encrypt(message, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	share1, err := tpks[0].DecryptAndProduceZNP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	share2, err := tpks[1].DecryptAndProduceZNP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	message2, err := tpks[0].CombinePartialDecryptionsZKP([]*PartialDecryptionZKP{share1, share2})
 	if err != nil {
@@ -329,31 +341,26 @@ func TestVerifyDecryption(t *testing.T) {
 	tkh := GetThresholdKeyGenerator(10, 2, 2, rand.Reader)
 	tpks, err := tkh.Generate()
 
-	pk := &tpks[0].ThresholdKey
+	pk := &tpks[0].ThresholdPublicKey
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	expt := b(101)
 	cypher, err := tpks[0].Encrypt(expt, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	pd1, err := tpks[0].DecryptAndProduceZNP(cypher.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	pd2, err := tpks[1].DecryptAndProduceZNP(cypher.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	pds := []*PartialDecryptionZKP{pd1, pd2}
 	if err != nil {
 		t.Error(err)
-		return
 	}
 
 	if err = pk.VerifyDecryption(cypher.C, b(101), pds); err != nil {
@@ -365,5 +372,4 @@ func TestVerifyDecryption(t *testing.T) {
 	if err = pk.VerifyDecryption(new(big.Int).Add(b(1), cypher.C), b(101), pds); err == nil {
 		t.Error(err)
 	}
-
 }

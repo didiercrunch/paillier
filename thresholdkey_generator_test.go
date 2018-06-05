@@ -15,13 +15,11 @@ func TestGenerateSafePrimesOfThresholdKeyGenerator(t *testing.T) {
 	tkh := new(ThresholdKeyGenerator)
 	tkh.nbits = 10
 	tkh.Random = rand.Reader
-	p, q, err := tkh.GenerateSafePrimes()
+	p, q, err := tkh.generateSafePrimes()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	AreSafePrimes(p, q, 10, t)
-
 }
 
 func TestInitPandP1(t *testing.T) {
@@ -29,9 +27,8 @@ func TestInitPandP1(t *testing.T) {
 	tkh.nbits = 10
 	tkh.Random = rand.Reader
 
-	tkh.InitPandP1()
+	tkh.initPandP1()
 	AreSafePrimes(tkh.p, tkh.p1, 10, t)
-
 }
 
 func TestInitQandQ1(t *testing.T) {
@@ -39,7 +36,7 @@ func TestInitQandQ1(t *testing.T) {
 	tkh.nbits = 10
 	tkh.Random = rand.Reader
 
-	tkh.InitQandQ1()
+	tkh.initQandQ1()
 	AreSafePrimes(tkh.q, tkh.q1, 10, t)
 }
 
@@ -48,44 +45,45 @@ func TestInitPsAndQs(t *testing.T) {
 	tkh.nbits = 10
 	tkh.Random = rand.Reader
 
-	tkh.InitPsAndQs()
-	AreSafePrimes(tkh.q, tkh.q1, 10, t)
+	tkh.initPsAndQs()
+
+	AreSafePrimes(tkh.p, tkh.p1, 10, t)
 	AreSafePrimes(tkh.q, tkh.q1, 10, t)
 }
 
 func TestArePsAndQsGood(t *testing.T) {
 	tkh := new(ThresholdKeyGenerator)
-	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(6), b(5), b(4), b(3)
-	if !tkh.ArePsAndQsGood() {
+	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(887), b(443), b(839), b(419)
+	if !tkh.arePsAndQsGood() {
 		t.Fail()
 	}
 
-	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(6), b(5), b(6), b(3)
-	if tkh.ArePsAndQsGood() {
+	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(887), b(443), b(887), b(443)
+	if tkh.arePsAndQsGood() {
 		t.Fail()
 	}
 
-	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(6), b(5), b(5), b(3)
-	if tkh.ArePsAndQsGood() {
+	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(887), b(443), b(443), b(221)
+	if tkh.arePsAndQsGood() {
 		t.Fail()
 	}
 }
 
 func TestInitShortcuts(t *testing.T) {
 	tkh := new(ThresholdKeyGenerator)
-	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(11), b(7), b(5), b(3)
-	tkh.InitShortcuts()
+	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(839), b(419), b(887), b(443)
+	tkh.initShortcuts()
 
-	if n(tkh.n) != 11*5 {
+	if !reflect.DeepEqual(tkh.n, b(744193)) {
 		t.Error("wrong n", tkh.n)
 	}
-	if n(tkh.m) != 7*3 {
+	if !reflect.DeepEqual(tkh.m, b(185617)) {
 		t.Error("wrong m", tkh.m)
 	}
-	if n(tkh.nm) != 11*5*7*3 {
+	if !reflect.DeepEqual(tkh.nm, new(big.Int).Mul(b(744193), b(185617))) {
 		t.Error("wrong nm", tkh.nm)
 	}
-	if n(tkh.nSquare) != 11*5*11*5 {
+	if !reflect.DeepEqual(tkh.nSquare, new(big.Int).Mul(b(744193), b(744193))) {
 		t.Error("wrong nSquare", tkh.nSquare)
 	}
 }
@@ -93,8 +91,8 @@ func TestInitShortcuts(t *testing.T) {
 func TestInitD(t *testing.T) {
 	tkh := new(ThresholdKeyGenerator)
 	tkh.p, tkh.p1, tkh.q, tkh.q1 = b(863), b(431), b(839), b(419)
-	tkh.InitShortcuts()
-	tkh.InitD()
+	tkh.initShortcuts()
+	tkh.initD()
 	if n(tkh.d)%n(tkh.m) != 0 {
 		t.Fail()
 	}
@@ -108,7 +106,7 @@ func TestInitNumerialValues(t *testing.T) {
 	tkh.nbits = 10
 	tkh.Random = rand.Reader
 
-	if err := tkh.InitNumerialValues(); err != nil {
+	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(err)
 	}
 }
@@ -118,17 +116,15 @@ func TestGenerateHidingPolynomial(t *testing.T) {
 	tkh.nbits = 10
 	tkh.Threshold = 10
 	tkh.Random = rand.Reader
-	if err := tkh.InitNumerialValues(); err != nil {
+	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(err)
-		return
 	}
-	if err := tkh.GenerateHidingPolynomial(); err != nil {
+	if err := tkh.generateHidingPolynomial(); err != nil {
 		t.Error(err)
 	}
 	p := tkh.polynomialCoefficients
 	if len(p) != tkh.Threshold {
 		t.Fail()
-		return
 	}
 	if n(p[0]) != n(tkh.d) {
 		t.Fail()
@@ -147,7 +143,7 @@ func TestComputeShare(t *testing.T) {
 	tkh.TotalNumberOfDecryptionServers = 5
 	tkh.nm = b(103)
 	tkh.polynomialCoefficients = []*big.Int{b(29), b(88), b(51)}
-	share := tkh.ComputeShare(2)
+	share := tkh.computeShare(2)
 	if n(share) != 31 {
 		t.Error("error computing a share.  ", share)
 	}
@@ -159,16 +155,14 @@ func TestCreateShares(t *testing.T) {
 	tkh.Threshold = 10
 	tkh.TotalNumberOfDecryptionServers = 100
 	tkh.Random = rand.Reader
-	if err := tkh.InitNumerialValues(); err != nil {
+	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(err)
-		return
 	}
-	if err := tkh.GenerateHidingPolynomial(); err != nil {
+	if err := tkh.generateHidingPolynomial(); err != nil {
 		t.Error(err)
-		return
 	}
 
-	if shares := tkh.CreateShares(); len(shares) != 100 {
+	if shares := tkh.createShares(); len(shares) != 100 {
 		t.Fail()
 	}
 }
@@ -178,7 +172,7 @@ func TestCreateViArray(t *testing.T) {
 	tkh.TotalNumberOfDecryptionServers = 10
 	tkh.v = b(54)
 	tkh.nSquare = b(101 * 101)
-	vArr := tkh.CreateViArray([]*big.Int{b(12), b(90), b(103)})
+	vArr := tkh.createViArray([]*big.Int{b(12), b(90), b(103)})
 	exp := []*big.Int{b(6162), b(304), b(2728)}
 	if !reflect.DeepEqual(vArr, exp) {
 		t.Fail()
@@ -187,7 +181,7 @@ func TestCreateViArray(t *testing.T) {
 
 func TestGetThresholdKeyGenerator(t *testing.T) {
 	tkh := GetThresholdKeyGenerator(50, 10, 6, rand.Reader)
-	if err := tkh.InitNumerialValues(); err != nil {
+	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(nil)
 	}
 }
@@ -209,7 +203,7 @@ func TestGenerate(t *testing.T) {
 		if len(tpk.Vi) != 10 {
 			t.Fail()
 		}
-		if tpk.G == nil || tpk.N == nil {
+		if tpk.N == nil {
 			t.Fail()
 		}
 		if tpk.Threshold != 6 || tpk.TotalNumberOfDecryptionServers != 10 {
@@ -223,9 +217,8 @@ func TestComputeV(t *testing.T) {
 	tkh.n = b(1907 * 1823)
 	tkh.nSquare = new(big.Int).Mul(tkh.n, tkh.n)
 	for i := 0; i < 100; i++ {
-		if err := tkh.ComputeV(); err != nil {
+		if err := tkh.computeV(); err != nil {
 			t.Error(err)
-			return
 		}
 		if tkh.v.Cmp(tkh.nSquare) > 0 {
 			t.Error("v is too big")
@@ -237,5 +230,4 @@ func TestComputeV(t *testing.T) {
 	t.Error(`v has never been bigger than n.  It is suspicious in the sense<
 	than it was taken in the range 0...n**2 -1
 	`)
-
 }
