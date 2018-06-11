@@ -1,7 +1,6 @@
 package paillier
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"math/big"
 	"reflect"
@@ -21,7 +20,7 @@ func AssertBSONIsGood(object, dump interface{}, t *testing.T) {
 		return
 	}
 	if !reflect.DeepEqual(object, dump) {
-		t.Fail()
+		t.Errorf("%v not equal %v", object, dump)
 	}
 }
 
@@ -36,31 +35,31 @@ func AssertJSONIsGood(object, dump interface{}, t *testing.T) {
 		return
 	}
 	if !reflect.DeepEqual(object, dump) {
-		t.Fail()
+		t.Errorf("%v not equal %v", object, dump)
 	}
 }
 
-func TestCypherGetBSON(t *testing.T) {
-	key := CreatePrivateKey(big.NewInt(101), big.NewInt(113))
-	cypher, err := key.Encrypt(big.NewInt(100), rand.Reader)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	data, err := bson.Marshal(cypher)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	cypher2 := new(Cypher)
-	if err = bson.Unmarshal(data, cypher2); err != nil {
-		t.Error(err)
-		return
-	}
-	if !reflect.DeepEqual(cypher, cypher2) {
-		t.Fail()
-	}
-}
+// func TestCypherGetBSON(t *testing.T) {
+// 	key := CreatePrivateKey(big.NewInt(101), big.NewInt(113))
+// 	cypher, err := key.Encrypt(big.NewInt(100), rand.Reader)
+// 	if err != nil {
+// 		t.Error(err)
+// 		return
+// 	}
+// 	data, err := bson.Marshal(cypher)
+// 	if err != nil {
+// 		t.Error(err)
+// 		return
+// 	}
+// 	cypher2 := new(Cypher)
+// 	if err = bson.Unmarshal(data, cypher2); err != nil {
+// 		t.Error(err)
+// 		return
+// 	}
+// 	if !reflect.DeepEqual(cypher, cypher2) {
+// 		t.Fail()
+// 	}
+// }
 
 func TestSetPrivateKeyBson(t *testing.T) {
 	key := CreatePrivateKey(big.NewInt(101), big.NewInt(113))
@@ -68,60 +67,60 @@ func TestSetPrivateKeyBson(t *testing.T) {
 
 }
 
-func TestGetBSONEmptyKey(t *testing.T) {
-	key := new(PrivateKey)
-	m, err := key.GetBSON()
-	if err != nil {
-		t.Error(err)
-	}
-	if !reflect.DeepEqual(make(map[string]string), m) {
-		t.Error(m)
-	}
-}
+// func TestGetBSONEmptyKey(t *testing.T) {
+// 	key := new(PrivateKey)
+// 	m, err := key.GetBSON()
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	if !reflect.DeepEqual(make(map[string]string), m) {
+// 		t.Error(m)
+// 	}
+// }
 
-func TestPartialDecryptionZKPJsonification(t *testing.T) {
-	pd := new(PartialDecryptionZKP)
-	pd.Key = new(ThresholdPublicKey)
-	pd.Key.Threshold = 98
-	pd.Key.TotalNumberOfDecryptionServers = 230
-	pd.Id = 1
-	pd.Key.Vi = []*big.Int{b(77), b(67)}
-	pd.Key.N = b(131)
-	pd.Key.V = b(101)
-	pd.Decryption = b(171)
-	pd.E = b(112)
-	pd.C = b(99)
-	pd.Key.N = b(345)
-	pd.Z = b(88)
+// func TestPartialDecryptionZKPJsonification(t *testing.T) {
+// 	pd := new(PartialDecryptionZKP)
+// 	pd.Key = new(ThresholdPublicKey)
+// 	pd.Key.Threshold = 98
+// 	pd.Key.TotalNumberOfDecryptionServers = 230
+// 	pd.Id = 1
+// 	pd.Key.Vi = []*big.Int{b(77), b(67)}
+// 	pd.Key.N = b(131)
+// 	pd.Key.V = b(101)
+// 	pd.Decryption = b(171)
+// 	pd.E = b(112)
+// 	pd.C = b(99)
+// 	pd.Key.N = b(345)
+// 	pd.Z = b(88)
 
-	AssertJSONIsGood(pd, new(PartialDecryptionZKP), t)
-}
+// 	AssertJSONIsGood(pd, new(PartialDecryptionZKP), t)
+// }
 
-func TestPartialDecryptionZKPBSONification(t *testing.T) {
-	pd := new(PartialDecryptionZKP)
-	pd.Key = new(ThresholdPublicKey)
-	pd.Key.Threshold = 98
-	pd.Key.TotalNumberOfDecryptionServers = 230
-	pd.Id = 1
-	pd.Key.Vi = []*big.Int{b(77), b(67)} // vi is 67
-	pd.Key.N = b(131)
-	pd.Key.V = b(101)
-	pd.Decryption = b(171)
-	pd.E = b(112)
-	pd.C = b(99)
-	pd.Key.N = b(345)
-	pd.Z = b(88)
+// func TestPartialDecryptionZKPBSONification(t *testing.T) {
+// 	pd := new(PartialDecryptionZKP)
+// 	pd.Key = new(ThresholdPublicKey)
+// 	pd.Key.Threshold = 98
+// 	pd.Key.TotalNumberOfDecryptionServers = 230
+// 	pd.Id = 1
+// 	pd.Key.Vi = []*big.Int{b(77), b(67)} // vi is 67
+// 	pd.Key.N = b(131)
+// 	pd.Key.V = b(101)
+// 	pd.Decryption = b(171)
+// 	pd.E = b(112)
+// 	pd.C = b(99)
+// 	pd.Key.N = b(345)
+// 	pd.Z = b(88)
 
-	AssertBSONIsGood(pd, new(PartialDecryptionZKP), t)
-}
+// 	AssertBSONIsGood(pd, new(PartialDecryptionZKP), t)
+// }
 
-func TestThresholdKeyBSON(t *testing.T) {
-	key := &ThresholdPublicKey{
-		PublicKey:                      PublicKey{b(9)},
-		TotalNumberOfDecryptionServers: 7,
-		Threshold:                      6,
-		V:                              b(3),
-		Vi:                             []*big.Int{b(2), b(34)},
-	}
-	AssertBSONIsGood(key, new(ThresholdPublicKey), t)
-}
+// func TestThresholdKeyBSON(t *testing.T) {
+// 	key := &ThresholdPublicKey{
+// 		PublicKey:                      PublicKey{b(9)},
+// 		TotalNumberOfDecryptionServers: 7,
+// 		Threshold:                      6,
+// 		V:                              b(3),
+// 		Vi:                             []*big.Int{b(2), b(34)},
+// 	}
+// 	AssertBSONIsGood(key, new(ThresholdPublicKey), t)
+// }
