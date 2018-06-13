@@ -94,9 +94,9 @@ func (thresholdPublicKey *ThresholdPublicKey) SetBSON(raw bson.Raw) error {
 	return r.ToThresholdPublicKey(thresholdPublicKey)
 }
 
-func (this *PublicKey) GetBSON() (interface{}, error) {
+func (publicKey *PublicKey) GetBSON() (interface{}, error) {
 	m := make(map[string]string)
-	m["n"] = fmt.Sprintf("%x", this.N)
+	m["n"] = fmt.Sprintf("%x", publicKey.N)
 	return m, nil
 }
 
@@ -106,32 +106,32 @@ type dbPrivateKey struct {
 	Mu     string `bson:",omitempty"`
 }
 
-func (this *PrivateKey) GetBSON() (interface{}, error) {
+func (privateKey *PrivateKey) GetBSON() (interface{}, error) {
 	m := make(map[string]string)
 
-	if this.N != nil {
-		m["n"] = fmt.Sprintf("%x", this.N)
+	if privateKey.N != nil {
+		m["n"] = fmt.Sprintf("%x", privateKey.N)
 	}
-	if this.Lambda != nil {
-		m["lambda"] = fmt.Sprintf("%x", this.Lambda)
+	if privateKey.Lambda != nil {
+		m["lambda"] = fmt.Sprintf("%x", privateKey.Lambda)
 	}
 	return m, nil
 }
 
-func (this *PrivateKey) SetBSON(raw bson.Raw) error {
+func (privateKey *PrivateKey) SetBSON(raw bson.Raw) error {
 	var err error = nil
 	c := new(dbPrivateKey)
 	raw.Unmarshal(c)
 
 	if c.N != "" {
-		this.N, err = fromHex(c.N)
+		privateKey.N, err = fromHex(c.N)
 		if err != nil {
 			return err
 		}
 	}
 
 	if c.Lambda != "" {
-		this.Lambda, err = fromHex(c.Lambda)
+		privateKey.Lambda, err = fromHex(c.Lambda)
 		if err != nil {
 			return err
 		}
@@ -153,46 +153,46 @@ type dbPartialDecryptionZKP struct {
 	Threshold                      int      `json:"threshold"`
 }
 
-func (this *dbPartialDecryptionZKP) FromPartialDecryptionZKP(pd *PartialDecryptionZKP) {
-	this.Id = pd.Id
-	this.TotalNumberOfDecryptionServers = pd.Key.TotalNumberOfDecryptionServers
-	this.Threshold = pd.Key.Threshold
-	this.Z = fmt.Sprintf("%x", pd.Z)
-	this.E = fmt.Sprintf("%x", pd.E)
-	this.N = fmt.Sprintf("%x", pd.Key.N)
-	this.C = fmt.Sprintf("%x", pd.C)
-	this.V = fmt.Sprintf("%x", pd.Key.V)
-	this.Decryption = fmt.Sprintf("%x", pd.Decryption)
-	this.Vi = make([]string, len(pd.Key.Vi))
+func (dbPDZKP *dbPartialDecryptionZKP) FromPartialDecryptionZKP(pd *PartialDecryptionZKP) {
+	dbPDZKP.Id = pd.Id
+	dbPDZKP.TotalNumberOfDecryptionServers = pd.Key.TotalNumberOfDecryptionServers
+	dbPDZKP.Threshold = pd.Key.Threshold
+	dbPDZKP.Z = fmt.Sprintf("%x", pd.Z)
+	dbPDZKP.E = fmt.Sprintf("%x", pd.E)
+	dbPDZKP.N = fmt.Sprintf("%x", pd.Key.N)
+	dbPDZKP.C = fmt.Sprintf("%x", pd.C)
+	dbPDZKP.V = fmt.Sprintf("%x", pd.Key.V)
+	dbPDZKP.Decryption = fmt.Sprintf("%x", pd.Decryption)
+	dbPDZKP.Vi = make([]string, len(pd.Key.Vi))
 	for i, vi := range pd.Key.Vi {
-		this.Vi[i] = fmt.Sprintf("%x", vi)
+		dbPDZKP.Vi[i] = fmt.Sprintf("%x", vi)
 	}
 }
 
-func (this *dbPartialDecryptionZKP) ToPartialDecryptionZKP(pd *PartialDecryptionZKP) error {
+func (dbPDZKP *dbPartialDecryptionZKP) ToPartialDecryptionZKP(pd *PartialDecryptionZKP) error {
 	pd.Key = new(paillier.ThresholdPublicKey)
 
 	var oks = make([]bool, 6)
 
-	pd.Id = this.Id
-	pd.Key.TotalNumberOfDecryptionServers = this.TotalNumberOfDecryptionServers
-	pd.Key.Threshold = this.Threshold
-	pd.Z, oks[0] = new(big.Int).SetString(this.Z, 16)
-	pd.E, oks[1] = new(big.Int).SetString(this.E, 16)
-	pd.C, oks[2] = new(big.Int).SetString(this.C, 16)
-	pd.Key.V, oks[3] = new(big.Int).SetString(this.V, 16)
-	pd.Key.N, oks[4] = new(big.Int).SetString(this.N, 16)
-	pd.Decryption, oks[5] = new(big.Int).SetString(this.Decryption, 16)
+	pd.Id = dbPDZKP.Id
+	pd.Key.TotalNumberOfDecryptionServers = dbPDZKP.TotalNumberOfDecryptionServers
+	pd.Key.Threshold = dbPDZKP.Threshold
+	pd.Z, oks[0] = new(big.Int).SetString(dbPDZKP.Z, 16)
+	pd.E, oks[1] = new(big.Int).SetString(dbPDZKP.E, 16)
+	pd.C, oks[2] = new(big.Int).SetString(dbPDZKP.C, 16)
+	pd.Key.V, oks[3] = new(big.Int).SetString(dbPDZKP.V, 16)
+	pd.Key.N, oks[4] = new(big.Int).SetString(dbPDZKP.N, 16)
+	pd.Decryption, oks[5] = new(big.Int).SetString(dbPDZKP.Decryption, 16)
 
 	if !all(oks) {
 		fmt.Println(oks)
-		fmt.Println(this.E, "|", this.Z, "|", this.C, "|", this.V, "|", this.Decryption)
+		fmt.Println(dbPDZKP.E, "|", dbPDZKP.Z, "|", dbPDZKP.C, "|", dbPDZKP.V, "|", dbPDZKP.Decryption)
 		return errors.New("numbers not in hexadecimal format")
 	}
 
-	pd.Key.Vi = make([]*big.Int, len(this.Vi))
+	pd.Key.Vi = make([]*big.Int, len(dbPDZKP.Vi))
 	var ok bool
-	for i, vi := range this.Vi {
+	for i, vi := range dbPDZKP.Vi {
 		pd.Key.Vi[i], ok = new(big.Int).SetString(vi, 16)
 		if !ok {
 			return errors.New("numbers not in hexadecimal format")
@@ -202,30 +202,30 @@ func (this *dbPartialDecryptionZKP) ToPartialDecryptionZKP(pd *PartialDecryption
 	return nil
 }
 
-func (this *PartialDecryptionZKP) MarshalJSON() ([]byte, error) {
+func (pd *PartialDecryptionZKP) MarshalJSON() ([]byte, error) {
 	db := new(dbPartialDecryptionZKP)
-	db.FromPartialDecryptionZKP(this)
+	db.FromPartialDecryptionZKP(pd)
 	return json.Marshal(db)
 }
 
-func (this *PartialDecryptionZKP) UnmarshalJSON(data []byte) error {
+func (pd *PartialDecryptionZKP) UnmarshalJSON(data []byte) error {
 	db := new(dbPartialDecryptionZKP)
 	if err := json.Unmarshal(data, db); err != nil {
 		return err
 	}
-	return db.ToPartialDecryptionZKP(this)
+	return db.ToPartialDecryptionZKP(pd)
 }
 
-func (this *PartialDecryptionZKP) GetBSON() (interface{}, error) {
+func (pd *PartialDecryptionZKP) GetBSON() (interface{}, error) {
 	db := new(dbPartialDecryptionZKP)
-	db.FromPartialDecryptionZKP(this)
+	db.FromPartialDecryptionZKP(pd)
 	return db, nil
 }
 
-func (this *PartialDecryptionZKP) SetBSON(raw bson.Raw) error {
+func (pd *PartialDecryptionZKP) SetBSON(raw bson.Raw) error {
 	db := new(dbPartialDecryptionZKP)
 	if err := raw.Unmarshal(db); err != nil {
 		return err
 	}
-	return db.ToPartialDecryptionZKP(this)
+	return db.ToPartialDecryptionZKP(pd)
 }
