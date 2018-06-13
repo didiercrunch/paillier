@@ -1,4 +1,4 @@
-package bson2
+package bson
 
 import (
 	"errors"
@@ -22,4 +22,8 @@ func all(oks []bool) bool {
 		}
 	}
 	return true
+}
+
+func b(i int) *big.Int {
+	return big.NewInt(int64(i))
 }

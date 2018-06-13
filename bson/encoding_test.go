@@ -1,4 +1,4 @@
-package bson2
+package bson
 
 import (
 	"crypto/rand"
@@ -75,7 +75,12 @@ func TestThresholdKeyBSON(t *testing.T) {
 }
 
 func TestSetPrivateKeyBson(t *testing.T) {
-	key := paillier.CreatePrivateKey(big.NewInt(101), big.NewInt(113))
+	var key = new(PrivateKey)
+	var keyOriginal = paillier.CreatePrivateKey(big.NewInt(101), big.NewInt(113))
+
+	key.PublicKey = keyOriginal.PublicKey
+	key.Lambda = keyOriginal.Lambda
+
 	dump := new(PrivateKey)
 
 	AssertBSONIsGood(key, dump, t)

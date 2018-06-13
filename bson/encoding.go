@@ -1,4 +1,4 @@
-package bson2
+package bson
 
 //  all the methods relative to the set/get json/bson should be stored
 //  in this file.
@@ -106,14 +106,14 @@ type dbPrivateKey struct {
 	Mu     string `bson:",omitempty"`
 }
 
-func (privateKey *PrivateKey) GetBSON() (interface{}, error) {
+func (this *PrivateKey) GetBSON() (interface{}, error) {
 	m := make(map[string]string)
 
-	if privateKey.N != nil {
-		m["n"] = fmt.Sprintf("%x", privateKey.N)
+	if this.N != nil {
+		m["n"] = fmt.Sprintf("%x", this.N)
 	}
-	if privateKey.Lambda != nil {
-		m["lambda"] = fmt.Sprintf("%x", privateKey.Lambda)
+	if this.Lambda != nil {
+		m["lambda"] = fmt.Sprintf("%x", this.Lambda)
 	}
 	return m, nil
 }
