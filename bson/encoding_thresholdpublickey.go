@@ -1,5 +1,3 @@
-// Package bson provides functions for serialization and deserialization between
-// paillier objects and BSON
 package bson
 
 import (
@@ -11,7 +9,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type ThresholdPublicKey paillier.ThresholdPublicKey
+type SerializableThresholdPublicKey paillier.ThresholdPublicKey
 
 // Serializes ThresholdPublicKey to BSON
 func SerializeThresholdPublicKey(key *paillier.ThresholdPublicKey) ([]byte, error) {
@@ -20,7 +18,7 @@ func SerializeThresholdPublicKey(key *paillier.ThresholdPublicKey) ([]byte, erro
 
 // Deserializes BSON to ThresholdPublicKey
 func DeserializeThresholdPublicKey(data []byte) (*paillier.ThresholdPublicKey, error) {
-	serializable := new(ThresholdPublicKey)
+	serializable := new(SerializableThresholdPublicKey)
 	if err := bson.Unmarshal(data, serializable); err != nil {
 		return nil, err
 	}
@@ -28,25 +26,23 @@ func DeserializeThresholdPublicKey(data []byte) (*paillier.ThresholdPublicKey, e
 	return toOriginalThresholdPublicKey(serializable), nil
 }
 
-// Changes original ThresholdPublicKey to serializable ThresholdPublicKey
-func toSerializableThresholdPublicKey(key *paillier.ThresholdPublicKey) *ThresholdPublicKey {
-	serializable := ThresholdPublicKey(*key)
+func toSerializableThresholdPublicKey(key *paillier.ThresholdPublicKey) *SerializableThresholdPublicKey {
+	serializable := SerializableThresholdPublicKey(*key)
 	return &serializable
 }
 
-// Changes serializable ThresholdPublicKey to original ThresholdPublicKey
-func toOriginalThresholdPublicKey(serializable *ThresholdPublicKey) *paillier.ThresholdPublicKey {
+func toOriginalThresholdPublicKey(serializable *SerializableThresholdPublicKey) *paillier.ThresholdPublicKey {
 	original := paillier.ThresholdPublicKey(*serializable)
 	return &original
 }
 
-func (thresholdPublicKey *ThresholdPublicKey) GetBSON() (interface{}, error) {
+func (thresholdPublicKey *SerializableThresholdPublicKey) GetBSON() (interface{}, error) {
 	r := new(dbThresholdKey)
 	r.fromThresholdPublicKey(thresholdPublicKey)
 	return r, nil
 }
 
-func (thresholdPublicKey *ThresholdPublicKey) SetBSON(raw bson.Raw) error {
+func (thresholdPublicKey *SerializableThresholdPublicKey) SetBSON(raw bson.Raw) error {
 	r := new(dbThresholdKey)
 	if err := raw.Unmarshal(r); err != nil {
 		return err
@@ -62,7 +58,7 @@ type dbThresholdKey struct {
 	N                              string
 }
 
-func (dbThresholdKey *dbThresholdKey) fromThresholdPublicKey(key *ThresholdPublicKey) {
+func (dbThresholdKey *dbThresholdKey) fromThresholdPublicKey(key *SerializableThresholdPublicKey) {
 	dbThresholdKey.TotalNumberOfDecryptionServers = key.TotalNumberOfDecryptionServers
 	dbThresholdKey.Threshold = key.Threshold
 	dbThresholdKey.V = fmt.Sprintf("%x", key.V)
@@ -73,7 +69,7 @@ func (dbThresholdKey *dbThresholdKey) fromThresholdPublicKey(key *ThresholdPubli
 	}
 }
 
-func (dbThresholdKey *dbThresholdKey) toThresholdPublicKey(key *ThresholdPublicKey) error {
+func (dbThresholdKey *dbThresholdKey) toThresholdPublicKey(key *SerializableThresholdPublicKey) error {
 	key.TotalNumberOfDecryptionServers = dbThresholdKey.TotalNumberOfDecryptionServers
 	key.Threshold = dbThresholdKey.Threshold
 	oks := make([]bool, 2)

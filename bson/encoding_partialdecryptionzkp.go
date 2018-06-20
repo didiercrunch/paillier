@@ -1,5 +1,3 @@
-// Package bson provides functions for serialization and deserialization between
-// paillier objects and BSON
 package bson
 
 import (
@@ -12,7 +10,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type PartialDecryptionZKP paillier.PartialDecryptionZKP
+type SerializablePartialDecryptionZKP paillier.PartialDecryptionZKP
 
 // Serializes PartialDecryptionZKP to BSON
 func SerializePartialDecryptionZKP(pdzkp *paillier.PartialDecryptionZKP) ([]byte, error) {
@@ -21,7 +19,7 @@ func SerializePartialDecryptionZKP(pdzkp *paillier.PartialDecryptionZKP) ([]byte
 
 // Deserializes BSON to PartialDecryptionZKP
 func DeserializePartialDecryptionZKP(data []byte) (*paillier.PartialDecryptionZKP, error) {
-	serializable := new(PartialDecryptionZKP)
+	serializable := new(SerializablePartialDecryptionZKP)
 	if err := bson.Unmarshal(data, serializable); err != nil {
 		return nil, err
 	}
@@ -36,7 +34,7 @@ func JsonSerializePartialDecryptionZKP(pdzkp *paillier.PartialDecryptionZKP) ([]
 
 // Deserializes JSON to PartialDecryptionZKP
 func JsonDeserializePartialDecryptionZKP(data []byte) (*paillier.PartialDecryptionZKP, error) {
-	serializable := new(PartialDecryptionZKP)
+	serializable := new(SerializablePartialDecryptionZKP)
 	if err := json.Unmarshal(data, serializable); err != nil {
 		return nil, err
 	}
@@ -44,14 +42,12 @@ func JsonDeserializePartialDecryptionZKP(data []byte) (*paillier.PartialDecrypti
 	return toOriginalPartialDecryptionZKP(serializable), nil
 }
 
-// Changes original PartialDecryptionZKP to serializable PartialDecryptionZKP
-func toSerializablePartialDecryptionZKP(pdzkp *paillier.PartialDecryptionZKP) *PartialDecryptionZKP {
-	serializable := PartialDecryptionZKP(*pdzkp)
+func toSerializablePartialDecryptionZKP(pdzkp *paillier.PartialDecryptionZKP) *SerializablePartialDecryptionZKP {
+	serializable := SerializablePartialDecryptionZKP(*pdzkp)
 	return &serializable
 }
 
-// Changes serializable PartialDecryptionZKP to original PartialDecryptionZKP
-func toOriginalPartialDecryptionZKP(serializable *PartialDecryptionZKP) *paillier.PartialDecryptionZKP {
+func toOriginalPartialDecryptionZKP(serializable *SerializablePartialDecryptionZKP) *paillier.PartialDecryptionZKP {
 	original := paillier.PartialDecryptionZKP(*serializable)
 	return &original
 }
@@ -69,13 +65,13 @@ type dbPartialDecryptionZKP struct {
 	Threshold                      int      `json:"threshold"`
 }
 
-func (pdzkp *PartialDecryptionZKP) GetBSON() (interface{}, error) {
+func (pdzkp *SerializablePartialDecryptionZKP) GetBSON() (interface{}, error) {
 	db := new(dbPartialDecryptionZKP)
 	db.fromPartialDecryptionZKP(pdzkp)
 	return db, nil
 }
 
-func (pdzkp *PartialDecryptionZKP) SetBSON(raw bson.Raw) error {
+func (pdzkp *SerializablePartialDecryptionZKP) SetBSON(raw bson.Raw) error {
 	db := new(dbPartialDecryptionZKP)
 	if err := raw.Unmarshal(db); err != nil {
 		return err
@@ -83,7 +79,7 @@ func (pdzkp *PartialDecryptionZKP) SetBSON(raw bson.Raw) error {
 	return db.toPartialDecryptionZKP(pdzkp)
 }
 
-func (dbPDZKP *dbPartialDecryptionZKP) fromPartialDecryptionZKP(pdzkp *PartialDecryptionZKP) {
+func (dbPDZKP *dbPartialDecryptionZKP) fromPartialDecryptionZKP(pdzkp *SerializablePartialDecryptionZKP) {
 	dbPDZKP.Id = pdzkp.Id
 	dbPDZKP.TotalNumberOfDecryptionServers = pdzkp.Key.TotalNumberOfDecryptionServers
 	dbPDZKP.Threshold = pdzkp.Key.Threshold
@@ -99,7 +95,7 @@ func (dbPDZKP *dbPartialDecryptionZKP) fromPartialDecryptionZKP(pdzkp *PartialDe
 	}
 }
 
-func (dbPDZKP *dbPartialDecryptionZKP) toPartialDecryptionZKP(pdzkp *PartialDecryptionZKP) error {
+func (dbPDZKP *dbPartialDecryptionZKP) toPartialDecryptionZKP(pdzkp *SerializablePartialDecryptionZKP) error {
 	pdzkp.Key = new(paillier.ThresholdPublicKey)
 
 	var oks = make([]bool, 6)

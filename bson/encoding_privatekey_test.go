@@ -7,7 +7,7 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-func TestSetPrivateKeyBson(t *testing.T) {
+func TestPrivateKeyBsonSerialization(t *testing.T) {
 	key := &paillier.PrivateKey{
 		PublicKey: paillier.PublicKey{
 			N: (b(345)),

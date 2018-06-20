@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-func TestThresholdKeyBSON(t *testing.T) {
+func TestThresholdKeySerialization(t *testing.T) {
 	key := &paillier.ThresholdPublicKey{
 		PublicKey:                      paillier.PublicKey{b(9)},
 		TotalNumberOfDecryptionServers: 7,

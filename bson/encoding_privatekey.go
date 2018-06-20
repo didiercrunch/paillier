@@ -1,5 +1,3 @@
-// Package bson provides functions for serialization and deserialization between
-// paillier objects and BSON
 package bson
 
 import (
@@ -9,7 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type PrivateKey paillier.PrivateKey
+type SerializablePrivateKey paillier.PrivateKey
 
 // Serializes PrivateKey to BSON
 func SerializePrivateKey(key *paillier.PrivateKey) ([]byte, error) {
@@ -18,7 +16,7 @@ func SerializePrivateKey(key *paillier.PrivateKey) ([]byte, error) {
 
 // Deserializes BSON to PrivateKey
 func DeserializePrivateKey(data []byte) (*paillier.PrivateKey, error) {
-	serializable := new(PrivateKey)
+	serializable := new(SerializablePrivateKey)
 	if err := bson.Unmarshal(data, serializable); err != nil {
 		return nil, err
 	}
@@ -26,14 +24,12 @@ func DeserializePrivateKey(data []byte) (*paillier.PrivateKey, error) {
 	return toOriginalPrivateKey(serializable), nil
 }
 
-// Changes original PrivateKey to serializable PrivateKey
-func toSerializablePrivateKey(key *paillier.PrivateKey) *PrivateKey {
-	serializable := PrivateKey(*key)
+func toSerializablePrivateKey(key *paillier.PrivateKey) *SerializablePrivateKey {
+	serializable := SerializablePrivateKey(*key)
 	return &serializable
 }
 
-// Changes serializable PrivateKey to original PrivateKey
-func toOriginalPrivateKey(serializable *PrivateKey) *paillier.PrivateKey {
+func toOriginalPrivateKey(serializable *SerializablePrivateKey) *paillier.PrivateKey {
 	original := paillier.PrivateKey(*serializable)
 	return &original
 }
@@ -44,7 +40,7 @@ type dbPrivateKey struct {
 	Mu     string `bson:",omitempty"`
 }
 
-func (privateKey *PrivateKey) GetBSON() (interface{}, error) {
+func (privateKey *SerializablePrivateKey) GetBSON() (interface{}, error) {
 	m := make(map[string]string)
 
 	if privateKey.N != nil {
@@ -56,7 +52,7 @@ func (privateKey *PrivateKey) GetBSON() (interface{}, error) {
 	return m, nil
 }
 
-func (privateKey *PrivateKey) SetBSON(raw bson.Raw) error {
+func (privateKey *SerializablePrivateKey) SetBSON(raw bson.Raw) error {
 	var err error = nil
 	c := new(dbPrivateKey)
 	raw.Unmarshal(c)

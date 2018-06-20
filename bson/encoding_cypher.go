@@ -1,5 +1,3 @@
-// Package bson provides functions for serialization and deserialization between
-// paillier objects and BSON
 package bson
 
 import (
@@ -11,7 +9,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type Cypher paillier.Cypher
+type SerializableCypher paillier.Cypher
 
 // Serializes Cypher to BSON
 func SerializeCypher(cypher *paillier.Cypher) ([]byte, error) {
@@ -20,7 +18,7 @@ func SerializeCypher(cypher *paillier.Cypher) ([]byte, error) {
 
 // Deserializes BSON to Cypher
 func DeserializeCypher(data []byte) (*paillier.Cypher, error) {
-	serializable := new(Cypher)
+	serializable := new(SerializableCypher)
 	if err := bson.Unmarshal(data, serializable); err != nil {
 		return nil, err
 	}
@@ -28,14 +26,12 @@ func DeserializeCypher(data []byte) (*paillier.Cypher, error) {
 	return toOriginalCypher(serializable), nil
 }
 
-// Changes original Cypher to serializable Cypher
-func toSerializableCypher(cypher *paillier.Cypher) *Cypher {
-	serializable := Cypher(*cypher)
+func toSerializableCypher(cypher *paillier.Cypher) *SerializableCypher {
+	serializable := SerializableCypher(*cypher)
 	return &serializable
 }
 
-// Changes serializable Cypher to original Cypher
-func toOriginalCypher(serializable *Cypher) *paillier.Cypher {
+func toOriginalCypher(serializable *SerializableCypher) *paillier.Cypher {
 	original := paillier.Cypher(*serializable)
 	return &original
 }
@@ -44,11 +40,11 @@ type dbCypher struct {
 	C string
 }
 
-func (cypher *Cypher) GetBSON() (interface{}, error) {
+func (cypher *SerializableCypher) GetBSON() (interface{}, error) {
 	return &dbCypher{fmt.Sprintf("%x", cypher.C)}, nil
 }
 
-func (cypher *Cypher) SetBSON(raw bson.Raw) error {
+func (cypher *SerializableCypher) SetBSON(raw bson.Raw) error {
 	c := dbCypher{}
 	if err := raw.Unmarshal(&c); err != nil {
 		return err
