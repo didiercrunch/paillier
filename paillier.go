@@ -10,12 +10,6 @@ type PublicKey struct {
 	N *big.Int
 }
 
-func (this *PublicKey) GetBSON() (interface{}, error) {
-	m := make(map[string]string)
-	m["n"] = fmt.Sprintf("%x", this.N)
-	return m, nil
-}
-
 func (this *PublicKey) GetNSquare() *big.Int {
 	return new(big.Int).Mul(this.N, this.N)
 }
