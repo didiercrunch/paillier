@@ -44,7 +44,10 @@ func (pub *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
 // their sum.
 //
 // It's possible because Paillier is a homomorphic encryption scheme, where
-// E(m1) * E(m2) = E(m1 + m2)
+// the product of two ciphertexts will decrypt to the sum of their corresponding
+// plaintexts:
+//
+// D( (E(m1) * E(m2) mod n^2) ) = m1 + m2 mod n
 func (pub *PublicKey) Add(cypher ...*Cypher) *Cypher {
 	accumulator := big.NewInt(1)
 
