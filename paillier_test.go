@@ -78,3 +78,17 @@ func TestAddCyphers(t *testing.T) {
 		t.Errorf("Unexpected decrypted value [%v]", m)
 	}
 }
+
+func TestAddCypherWithSmallKeyModulus(t *testing.T) {
+	privateKey := CreatePrivateKey(big.NewInt(7), big.NewInt(5))
+
+	cypher1, _ := privateKey.Encrypt(big.NewInt(41), rand.Reader)
+	cypher2, _ := privateKey.Encrypt(big.NewInt(219), rand.Reader)
+	cypher3, _ := privateKey.Encrypt(big.NewInt(54), rand.Reader)
+	cypher4 := privateKey.Add(cypher1, cypher2, cypher3)
+
+	m := privateKey.Decrypt(cypher4)
+	if !reflect.DeepEqual(m, big.NewInt(34)) {
+		t.Errorf("Unexpected decrypted value [%v]", m)
+	}
+}
