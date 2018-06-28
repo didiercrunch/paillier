@@ -40,14 +40,24 @@ func (pub *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
 	return &Cypher{new(big.Int).Mod(new(big.Int).Mul(rn, gm), nSquare)}, nil
 }
 
-// Takes two cypher texts and returns a 3rd one that encode
-// the sum of the two plain texts.
+// Add takes an arbitrary number of cyphertexts and returns one that encodes
+// their sum.
 //
 // It's possible because Paillier is a homomorphic encryption scheme, where
 // E(m1) * E(m2) = E(m1 + m2)
-func (this *PublicKey) Add(cypher1, cypher2 *Cypher) *Cypher {
-	m := new(big.Int).Mul(cypher1.C, cypher2.C)
-	return &Cypher{new(big.Int).Mod(m, this.GetNSquare())}
+func (pub *PublicKey) Add(cypher ...*Cypher) *Cypher {
+	accumulator := big.NewInt(1)
+
+	for _, c := range cypher {
+		accumulator = new(big.Int).Mod(
+			new(big.Int).Mul(accumulator, c.C),
+			pub.GetNSquare(),
+		)
+	}
+
+	return &Cypher{
+		C: accumulator,
+	}
 }
 
 type PrivateKey struct {
