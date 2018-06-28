@@ -64,13 +64,31 @@ func TestEncryptDecryptSmall(t *testing.T) {
 	}
 }
 
-func TestAddCypher(t *testing.T) {
-	privateKey := CreatePrivateKey(big.NewInt(13), big.NewInt(11))
-	cypher1, _ := privateKey.Encrypt(big.NewInt(12), rand.Reader)
-	cypher2, _ := privateKey.Encrypt(big.NewInt(13), rand.Reader)
-	cypher3 := privateKey.Add(cypher1, cypher2)
-	m := privateKey.Decrypt(cypher3)
-	if !reflect.DeepEqual(m, big.NewInt(25)) {
-		t.Error(m)
+func TestAddCyphers(t *testing.T) {
+	privateKey := CreatePrivateKey(big.NewInt(17), big.NewInt(13))
+
+	cypher1, _ := privateKey.Encrypt(big.NewInt(5), rand.Reader)
+	cypher2, _ := privateKey.Encrypt(big.NewInt(6), rand.Reader)
+	cypher3, _ := privateKey.Encrypt(big.NewInt(7), rand.Reader)
+	cypher4, _ := privateKey.Encrypt(big.NewInt(8), rand.Reader)
+	cypher5 := privateKey.Add(cypher1, cypher2, cypher3, cypher4)
+
+	m := privateKey.Decrypt(cypher5)
+	if !reflect.DeepEqual(m, big.NewInt(26)) {
+		t.Errorf("Unexpected decrypted value [%v]", m)
+	}
+}
+
+func TestAddCypherWithSmallKeyModulus(t *testing.T) {
+	privateKey := CreatePrivateKey(big.NewInt(7), big.NewInt(5))
+
+	cypher1, _ := privateKey.Encrypt(big.NewInt(41), rand.Reader)
+	cypher2, _ := privateKey.Encrypt(big.NewInt(219), rand.Reader)
+	cypher3, _ := privateKey.Encrypt(big.NewInt(54), rand.Reader)
+	cypher4 := privateKey.Add(cypher1, cypher2, cypher3)
+
+	m := privateKey.Decrypt(cypher4)
+	if !reflect.DeepEqual(m, big.NewInt(34)) {
+		t.Errorf("Unexpected decrypted value [%v]", m)
 	}
 }
