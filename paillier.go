@@ -10,11 +10,11 @@ type PublicKey struct {
 	N *big.Int
 }
 
-func (this *PublicKey) GetNSquare() *big.Int {
-	return new(big.Int).Mul(this.N, this.N)
+func (pk *PublicKey) GetNSquare() *big.Int {
+	return new(big.Int).Mul(pk.N, pk.N)
 }
 
-// Encode a plaintext in a cypher one. The plain text must be smaller that
+// Encrypt a plaintext into a cypher one. The plain text must be smaller that
 // N and bigger or equal than zero. random is usually rand.Reader from the
 // package crypto/rand.
 //
@@ -24,30 +24,43 @@ func (this *PublicKey) GetNSquare() *big.Int {
 // See [KL 08] construction 11.32, page 414.
 //
 // Returns an error if an error has be returned by io.Reader.
-func (pub *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
-	r, err := GetRandomNumberInMultiplicativeGroup(pub.N, random)
+func (pk *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
+	r, err := GetRandomNumberInMultiplicativeGroup(pk.N, random)
 	if err != nil {
 		return nil, err
 	}
-	nSquare := pub.GetNSquare()
+	nSquare := pk.GetNSquare()
 
 	// g is _always_ equal n+1
 	// Threshold encryption is safe only for g=n+1 choice.
 	// See [DJN 10], section 5.1
-	g := new(big.Int).Add(pub.N, big.NewInt(1))
+	g := new(big.Int).Add(pk.N, big.NewInt(1))
 	gm := new(big.Int).Exp(g, m, nSquare)
-	rn := new(big.Int).Exp(r, pub.N, nSquare)
+	rn := new(big.Int).Exp(r, pk.N, nSquare)
 	return &Cypher{new(big.Int).Mod(new(big.Int).Mul(rn, gm), nSquare)}, nil
 }
 
-// Takes two cypher texts and returns a 3rd one that encode
-// the sum of the two plain texts.
+// Add takes an arbitrary number of cyphertexts and returns one that encodes
+// their sum.
 //
 // It's possible because Paillier is a homomorphic encryption scheme, where
-// E(m1) * E(m2) = E(m1 + m2)
-func (this *PublicKey) Add(cypher1, cypher2 *Cypher) *Cypher {
-	m := new(big.Int).Mul(cypher1.C, cypher2.C)
-	return &Cypher{new(big.Int).Mod(m, this.GetNSquare())}
+// the product of two ciphertexts will decrypt to the sum of their corresponding
+// plaintexts:
+//
+// D( (E(m1) * E(m2) mod n^2) ) = m1 + m2 mod n
+func (pk *PublicKey) Add(cypher ...*Cypher) *Cypher {
+	accumulator := big.NewInt(1)
+
+	for _, c := range cypher {
+		accumulator = new(big.Int).Mod(
+			new(big.Int).Mul(accumulator, c.C),
+			pk.GetNSquare(),
+		)
+	}
+
+	return &Cypher{
+		C: accumulator,
+	}
 }
 
 type PrivateKey struct {
