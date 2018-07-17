@@ -92,3 +92,36 @@ func TestAddCypherWithSmallKeyModulus(t *testing.T) {
 		t.Errorf("Unexpected decrypted value [%v]", m)
 	}
 }
+
+func TestMulCypher(t *testing.T) {
+	privateKey := CreatePrivateKey(big.NewInt(17), big.NewInt(13))
+
+	cypher, err := privateKey.Encrypt(big.NewInt(3), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cypherMultiple := privateKey.Mul(cypher, big.NewInt(7))
+	multiple := privateKey.Decrypt(cypherMultiple)
+
+	if !reflect.DeepEqual(multiple, big.NewInt(21)) {
+		t.Errorf("Unexpected decrypted value [%v]", multiple)
+	}
+}
+
+func TestMulCypherWithSmallKeyModulus(t *testing.T) {
+	privateKey := CreatePrivateKey(big.NewInt(7), big.NewInt(5))
+
+	cypher, err := privateKey.Encrypt(big.NewInt(30), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cypherMultiple := privateKey.Mul(cypher, big.NewInt(93))
+	multiple := privateKey.Decrypt(cypherMultiple)
+
+	// (30*93) mod (7*5) = 25
+	if !reflect.DeepEqual(multiple, big.NewInt(25)) {
+		t.Errorf("Unexpected decrypted value [%v]", multiple)
+	}
+}

@@ -63,6 +63,19 @@ func (pk *PublicKey) Add(cypher ...*Cypher) *Cypher {
 	}
 }
 
+// Mul returns a product of `cypher` and `scalar` without decrypting `cypher`.
+//
+// It's possible because Paillier is a homomorphic encryption scheme, where
+// an encrypted plaintext `m` raised to an integer `k` will decrypt to the
+// product of the plaintext `m` and `k`:
+//
+// D( E(m)^k mod N^2 ) = km mod N
+func (pk *PublicKey) Mul(cypher *Cypher, scalar *big.Int) *Cypher {
+	return &Cypher{
+		C: new(big.Int).Exp(cypher.C, scalar, pk.GetNSquare()),
+	}
+}
+
 type PrivateKey struct {
 	PublicKey
 	Lambda *big.Int
