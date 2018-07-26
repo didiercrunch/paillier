@@ -63,7 +63,7 @@ func GenerateSafePrime(
 	bitLen int,
 	concurrencyLevel int,
 	timeout time.Duration,
-) (*big.Int, *big.Int, error) {
+) (p *big.Int, q *big.Int, err error) {
 	if bitLen < 6 {
 		return nil, nil, errors.New("safe prime size must be at least 6 bits")
 	}
@@ -75,11 +75,15 @@ func GenerateSafePrime(
 	defer close(errChan)
 
 	mutex := &sync.Mutex{}
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(concurrencyLevel)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	for i := 0; i < concurrencyLevel; i++ {
-		runGenPrimeRoutine(ctx, primeChan, errChan, mutex, rand.Reader, bitLen)
+		runGenPrimeRoutine(
+			ctx, primeChan, errChan, mutex, waitGroup, rand.Reader, bitLen,
+		)
 	}
 
 	// Cancel after the specified timeout.
@@ -95,15 +99,18 @@ func GenerateSafePrime(
 		mutex.Lock()
 		cancel()
 		mutex.Unlock()
-		return result.p, result.q, nil
+		p, q, err = result.p, result.q, nil
 	case err := <-errChan:
 		mutex.Lock()
 		cancel()
 		mutex.Unlock()
-		return nil, nil, err
+		p, q, err = nil, nil, err
 	case <-ctx.Done():
-		return nil, nil, fmt.Errorf("generator timed out after %v", timeout)
+		p, q, err = nil, nil, fmt.Errorf("generator timed out after %v", timeout)
 	}
+
+	waitGroup.Wait()
+	return
 }
 
 type safePrime struct {
@@ -151,6 +158,7 @@ func runGenPrimeRoutine(
 	primeChan chan safePrime,
 	errChan chan error,
 	mutex *sync.Mutex,
+	waitGroup *sync.WaitGroup,
 	rand io.Reader,
 	pBitLen int,
 ) {
@@ -170,6 +178,7 @@ func runGenPrimeRoutine(
 		for {
 			select {
 			case <-ctx.Done():
+				waitGroup.Done()
 				return
 			default:
 				_, err := io.ReadFull(rand, bytes)
@@ -253,6 +262,7 @@ func runGenPrimeRoutine(
 					}
 					mutex.Unlock()
 
+					waitGroup.Done()
 					return
 				}
 			}
