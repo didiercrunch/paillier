@@ -2,7 +2,6 @@ package paillier
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -77,18 +76,18 @@ func TestAsyncGenerator(t *testing.T) {
 					t.Errorf("2q + 1 != p")
 				}
 
-				if len(p.Bytes()) != test.bitLen {
-					fmt.Errorf(
+				if p.BitLen() != test.bitLen {
+					t.Fatalf(
 						"Unexpected p bit length\nActual: %v\nExpected: %v",
-						len(p.Bytes()),
+						p.BitLen(),
 						test.bitLen,
 					)
 				}
 
-				if len(q.Bytes()) != test.bitLen-1 {
-					fmt.Errorf(
+				if q.BitLen() != test.bitLen-1 {
+					t.Fatalf(
 						"Unexpected q bit length\nActual: %v\nExpected: %v",
-						len(q.Bytes()),
+						q.BitLen(),
 						test.bitLen-1,
 					)
 				}
