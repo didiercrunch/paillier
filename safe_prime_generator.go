@@ -10,7 +10,6 @@ package paillier
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
@@ -63,6 +62,7 @@ func GenerateSafePrime(
 	bitLen int,
 	concurrencyLevel int,
 	timeout time.Duration,
+	random io.Reader,
 ) (p *big.Int, q *big.Int, err error) {
 	if bitLen < 6 {
 		return nil, nil, errors.New("safe prime size must be at least 6 bits")
@@ -82,7 +82,7 @@ func GenerateSafePrime(
 
 	for i := 0; i < concurrencyLevel; i++ {
 		runGenPrimeRoutine(
-			ctx, primeChan, errChan, mutex, waitGroup, rand.Reader, bitLen,
+			ctx, primeChan, errChan, mutex, waitGroup, random, bitLen,
 		)
 	}
 

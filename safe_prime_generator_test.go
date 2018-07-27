@@ -1,8 +1,8 @@
 package paillier
 
 import (
+	"crypto/rand"
 	"errors"
-	"math/big"
 	"reflect"
 	"testing"
 	"time"
@@ -44,6 +44,7 @@ func TestAsyncGenerator(t *testing.T) {
 				test.bitLen,
 				concurrencyLevel,
 				test.timeout,
+				rand.Reader,
 			)
 
 			if test.expectedError != nil {
@@ -59,38 +60,7 @@ func TestAsyncGenerator(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if !p.ProbablyPrime(20) {
-					t.Errorf("p is not prime; p = %v", p)
-				}
-
-				if !q.ProbablyPrime(20) {
-					t.Errorf("q is not prime; q = %v", q)
-				}
-
-				// p = 2q + 1 ?
-				expectedP := new(big.Int)
-				expectedP.Mul(big.NewInt(2), q)
-				expectedP.Add(expectedP, big.NewInt(1))
-
-				if expectedP.Cmp(p) != 0 {
-					t.Errorf("2q + 1 != p")
-				}
-
-				if p.BitLen() != test.bitLen {
-					t.Fatalf(
-						"Unexpected p bit length\nActual: %v\nExpected: %v",
-						p.BitLen(),
-						test.bitLen,
-					)
-				}
-
-				if q.BitLen() != test.bitLen-1 {
-					t.Fatalf(
-						"Unexpected q bit length\nActual: %v\nExpected: %v",
-						q.BitLen(),
-						test.bitLen-1,
-					)
-				}
+				AreSafePrimes(p, q, test.bitLen, t)
 			}
 		})
 	}

@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"io"
 	"math/big"
-	"time"
 )
 
 var ZERO = big.NewInt(0)
@@ -19,15 +18,6 @@ func Factorial(n int) *big.Int {
 		ret = new(big.Int).Mul(ret, big.NewInt(int64(i)))
 	}
 	return ret
-}
-
-//  Returns 2 primes such that p = 2 * q + 1 and that the length of
-//  p is nbits.  `p` is called a safe prime
-//
-// Deprecated: This function has been left here just for backward compatibility.
-// Please use `GenerateSafePrime` from the `safe_prime_generator.go` directly.
-func GenerateSafePrimes(nbits int, random io.Reader) (p, q *big.Int, err error) {
-	return GenerateSafePrime(nbits, 4, 120*time.Second)
 }
 
 // Generate a random element in the group of all the elements in Z/nZ that
