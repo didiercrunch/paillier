@@ -145,7 +145,7 @@ type safePrime struct {
 //    If `p` is coprime to all the elements of `smallPrimes`, go to point 5.
 // 5. At this point, we know `q` is potentially prime, and `p=q+1` is also
 //    potentially prime. We need to execute a final primality test for `q`.
-//    We apply Miller-Rabin and Baillie-PSW tests. If they succeeds, it means
+//    We apply Miller-Rabin and Baillie-PSW tests. If they succeed, it means
 //    that `q` is prime with a very high probability. Knowing `q` is prime,
 //    we use Pocklington's criterion to prove the primality of `p=2q+1`, that
 //    is, we execute Fermat primality test to base 2 checking whether
