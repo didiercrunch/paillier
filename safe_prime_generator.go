@@ -210,9 +210,6 @@ func runGenPrimeRoutine(
 
 				q.SetBytes(bytes)
 
-				p.Mul(q, big.NewInt(2))
-				p.Add(p, big.NewInt(1))
-
 				// Calculate the value mod the product of smallPrimes. If it's
 				// a multiple of any of these primes we add two until it isn't.
 				// The probability of overflowing is minimal and can be ignored
@@ -279,9 +276,7 @@ func isPocklingtonCriterionSatisfied(p *big.Int) bool {
 }
 
 func isPrimeCandidate(number *big.Int) bool {
-	bigMod := new(big.Int)
-	bigMod.Mod(number, smallPrimesProduct)
-	m := bigMod.Uint64()
+	m := new(big.Int).Mod(number, smallPrimesProduct).Uint64()
 
 	for _, prime := range smallPrimes {
 		if m%uint64(prime) == 0 && m != uint64(prime) {
