@@ -125,7 +125,7 @@ type safePrime struct {
 //
 // The algorithm is as follows:
 // 1. Generate a random odd number `q` of length `pBitLen-1` with two the most
-//    significant bytes set to `1`.
+//    significant bits set to `1`.
 // 2. Execute preliminary primality test on `q` checking whether it is coprime
 //    to all the elements of `smallPrimes`. It allows to eliminate trivial
 //    cases quickly, when `q` is obviously no prime, without running an
@@ -231,6 +231,19 @@ func runGenPrimeRoutine(
 						q.Add(q, bigMod)
 					}
 
+					// If `q = 1 (mod 3)`, then `p` is a multiple of `3` so it's
+					// obviously no prime and such `q` should be rejected.
+					// This will happen in 50% of cases and we should detect
+					// and eliminate them early.
+					//
+					// Explanation:
+					// If q = 1 (mod 3) then there exists a q' such that:
+					// q = 3q' + 1
+					//
+					// Since p = 2q + 1:
+					// p = 2q + 1 = 2(3q' + 1) + 1 = 6q' + 2 + 1 = 6q' + 3 =
+					//   = 3(2q' + 1)
+					// So `p` is a multiple of `3`.
 					qMod3 := new(big.Int).Mod(q, big.NewInt(3))
 					if qMod3.Cmp(big.NewInt(1)) == 0 {
 						continue NextDelta
