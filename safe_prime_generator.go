@@ -74,7 +74,6 @@ func GenerateSafePrime(
 	defer close(primeChan)
 	defer close(errChan)
 
-	mutex := &sync.Mutex{}
 	waitGroup := &sync.WaitGroup{}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -82,28 +81,22 @@ func GenerateSafePrime(
 	for i := 0; i < concurrencyLevel; i++ {
 		waitGroup.Add(1)
 		runGenPrimeRoutine(
-			ctx, primeChan, errChan, mutex, waitGroup, random, bitLen,
+			ctx, primeChan, errChan, waitGroup, random, bitLen,
 		)
 	}
 
 	// Cancel after the specified timeout.
 	go func() {
 		time.Sleep(timeout)
-		mutex.Lock()
 		cancel()
-		mutex.Unlock()
 	}()
 
 	select {
 	case result := <-primeChan:
-		mutex.Lock()
 		cancel()
-		mutex.Unlock()
 		p, q, err = result.p, result.q, nil
 	case err := <-errChan:
-		mutex.Lock()
 		cancel()
-		mutex.Unlock()
 		p, q, err = nil, nil, err
 	case <-ctx.Done():
 		p, q, err = nil, nil, fmt.Errorf("generator timed out after %v", timeout)
@@ -157,7 +150,6 @@ func runGenPrimeRoutine(
 	ctx context.Context,
 	primeChan chan safePrime,
 	errChan chan error,
-	mutex *sync.Mutex,
 	waitGroup *sync.WaitGroup,
 	rand io.Reader,
 	pBitLen int,
@@ -175,10 +167,11 @@ func runGenPrimeRoutine(
 	bigMod := new(big.Int)
 
 	go func() {
+		defer waitGroup.Done()
+
 		for {
 			select {
 			case <-ctx.Done():
-				waitGroup.Done()
 				return
 			default:
 				_, err := io.ReadFull(rand, bytes)
@@ -266,13 +259,7 @@ func runGenPrimeRoutine(
 					isPocklingtonCriterionSatisfied(p) &&
 					q.BitLen() == qBitLen {
 
-					mutex.Lock()
-					if ctx.Err() == nil {
-						primeChan <- safePrime{p, q}
-					}
-					mutex.Unlock()
-
-					waitGroup.Done()
+					primeChan <- safePrime{p, q}
 					return
 				}
 			}
