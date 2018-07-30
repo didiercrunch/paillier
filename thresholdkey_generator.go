@@ -59,7 +59,9 @@ func GetThresholdKeyGenerator(nbits, TotalNumberOfDecryptionServers, Threshold i
 }
 
 func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
-	return GenerateSafePrime(tkg.nbits, 4, 120*time.Second, tkg.Random)
+	concurrencyLevel := 4
+	timeout := 120 * time.Second
+	return GenerateSafePrime(tkg.nbits, concurrencyLevel, timeout, tkg.Random)
 }
 
 func (tkg *ThresholdKeyGenerator) initPandP1() error {
