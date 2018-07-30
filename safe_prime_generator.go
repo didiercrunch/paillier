@@ -265,6 +265,10 @@ func runGenPrimeRoutine(
 	}()
 }
 
+// Pocklington's criterion can be used to prove the primality of `p = 2q + 1`
+// once one has proven the primality of `q`.
+// With `q` prime, `p = 2q + 1`, and `p` passing Fermat's primality test to base
+// `2` that `2^{p-1} = 1 (mod p)` then `p` is prime as well.
 func isPocklingtonCriterionSatisfied(p *big.Int) bool {
 	return new(big.Int).Exp(
 		big.NewInt(2),
