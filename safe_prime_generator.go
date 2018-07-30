@@ -68,19 +68,19 @@ func GenerateSafePrime(
 		return nil, nil, errors.New("safe prime size must be at least 6 bits")
 	}
 
-	primeChan := make(chan safePrime, 1)
-	errChan := make(chan error, 1)
+	primeChan := make(chan safePrime, concurrencyLevel)
+	errChan := make(chan error, concurrencyLevel)
 
 	defer close(primeChan)
 	defer close(errChan)
 
 	mutex := &sync.Mutex{}
 	waitGroup := &sync.WaitGroup{}
-	waitGroup.Add(concurrencyLevel)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	for i := 0; i < concurrencyLevel; i++ {
+		waitGroup.Add(1)
 		runGenPrimeRoutine(
 			ctx, primeChan, errChan, mutex, waitGroup, random, bitLen,
 		)
