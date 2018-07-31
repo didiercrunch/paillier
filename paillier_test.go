@@ -142,13 +142,13 @@ func TestAddCyphers(t *testing.T) {
 func TestAddCypherWithSmallKeyModulus(t *testing.T) {
 	privateKey := CreatePrivateKey(big.NewInt(7), big.NewInt(5))
 
-	cypher1, _ := privateKey.Encrypt(big.NewInt(41), rand.Reader)
-	cypher2, _ := privateKey.Encrypt(big.NewInt(219), rand.Reader)
-	cypher3, _ := privateKey.Encrypt(big.NewInt(54), rand.Reader)
+	cypher1, _ := privateKey.Encrypt(big.NewInt(30), rand.Reader)
+	cypher2, _ := privateKey.Encrypt(big.NewInt(25), rand.Reader)
+	cypher3, _ := privateKey.Encrypt(big.NewInt(11), rand.Reader)
 	cypher4 := privateKey.Add(cypher1, cypher2, cypher3)
 
 	m := privateKey.Decrypt(cypher4)
-	if m.Cmp(big.NewInt(34)) != 0 {
+	if m.Cmp(big.NewInt(31)) != 0 {
 		t.Errorf("Unexpected decrypted value [%v]", m)
 	}
 }
