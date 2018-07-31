@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"io"
 	"math/big"
+	"time"
 )
 
 // Generates a threshold Paillier key with an algorithm based on [DJN 10],
@@ -58,7 +59,9 @@ func GetThresholdKeyGenerator(nbits, TotalNumberOfDecryptionServers, Threshold i
 }
 
 func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
-	return GenerateSafePrimes(tkg.nbits, tkg.Random)
+	concurrencyLevel := 4
+	timeout := 120 * time.Second
+	return GenerateSafePrime(tkg.nbits, concurrencyLevel, timeout, tkg.Random)
 }
 
 func (tkg *ThresholdKeyGenerator) initPandP1() error {
