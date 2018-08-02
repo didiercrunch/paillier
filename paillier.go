@@ -15,8 +15,8 @@ func (pk *PublicKey) GetNSquare() *big.Int {
 }
 
 // EncryptWithR encrypts a plaintext into a cypher one with random `r` specified
-// in the argument. The plain text must be smaller that N and bigger or equal
-// than zero. `r` is the randomness used to encrypt the plaintext. `r` must be
+// in the argument. The plain text must be smaller that N and bigger than or
+// equal zero. `r` is the randomness used to encrypt the plaintext. `r` must be
 // a random element from a multiplicative group of integers modulo N.
 //
 // If you don't need to use the specific `r`, you should use the `Encrypt`
@@ -28,6 +28,14 @@ func (pk *PublicKey) GetNSquare() *big.Int {
 //
 // See [KL 08] construction 11.32, page 414.
 func (pk *PublicKey) EncryptWithR(m *big.Int, r *big.Int) (*Cypher, error) {
+	if m.Cmp(ZERO) == -1 || m.Cmp(pk.N) != -1 { // m < 0 || m >= N  ?
+		return nil, fmt.Errorf(
+			"%v is out of allowed plaintext space [0, %v)",
+			m,
+			pk.N,
+		)
+	}
+
 	nSquare := pk.GetNSquare()
 
 	// g is _always_ equal n+1
@@ -40,7 +48,7 @@ func (pk *PublicKey) EncryptWithR(m *big.Int, r *big.Int) (*Cypher, error) {
 }
 
 // Encrypt a plaintext into a cypher one. The plain text must be smaller that
-// N and bigger or equal than zero. random is usually rand.Reader from the
+// N and bigger than or equal zero. random is usually rand.Reader from the
 // package crypto/rand.
 //
 // m - plaintext to encrypt
