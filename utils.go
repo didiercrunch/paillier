@@ -20,22 +20,6 @@ func Factorial(n int) *big.Int {
 	return ret
 }
 
-//  Returns 2 primes such that p = 2 * q + 1 and that the length of
-//  p is nbits.  `p` is called a safe prime
-func GenerateSafePrimes(nbits int, random io.Reader) (p, q *big.Int, err error) {
-	for {
-		q, err = rand.Prime(random, nbits-1)
-		if err != nil {
-			return
-		}
-		p = (new(big.Int)).Mul(q, big.NewInt(2))
-		p = p.Add(p, big.NewInt(1))
-		if p.ProbablyPrime(50) { //a probability of 2**-100 of not being prime
-			return
-		}
-	}
-}
-
 // Generate a random element in the group of all the elements in Z/nZ that
 // has a multiplicative inverse.
 func GetRandomNumberInMultiplicativeGroup(n *big.Int, random io.Reader) (*big.Int, error) {

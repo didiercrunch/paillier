@@ -87,16 +87,6 @@ func GetEntireRQn(n int) map[int]bool {
 	return ret
 }
 
-func TestGenerateSafePrimes(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		p, q, err := GenerateSafePrimes(20, rand.Reader)
-		if err != nil {
-			t.Error(err)
-		}
-		AreSafePrimes(p, q, 20, t)
-	}
-}
-
 func TestGetRandomGeneratorOfTheQuadraticResidue(t *testing.T) {
 	tooSmallPrime1, tooSmallPrime2 := b(347), b(359)
 	m := new(big.Int).Mul(tooSmallPrime1, tooSmallPrime2)
