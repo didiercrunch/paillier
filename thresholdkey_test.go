@@ -184,7 +184,7 @@ func TestupdateCprime(t *testing.T) {
 }
 
 func TestEncryptingDecryptingSimple(t *testing.T) {
-	tkh := GetThresholdKeyGenerator(10, 2, 1, rand.Reader)
+	tkh := GetThresholdKeyGenerator(32, 2, 1, rand.Reader)
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
@@ -205,7 +205,7 @@ func TestEncryptingDecryptingSimple(t *testing.T) {
 }
 
 func TestEncryptingDecrypting(t *testing.T) {
-	tkh := GetThresholdKeyGenerator(10, 2, 2, rand.Reader)
+	tkh := GetThresholdKeyGenerator(32, 2, 2, rand.Reader)
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
@@ -227,7 +227,7 @@ func TestEncryptingDecrypting(t *testing.T) {
 }
 
 func TestHomomorphicThresholdEncryption(t *testing.T) {
-	tkh := GetThresholdKeyGenerator(10, 2, 2, rand.Reader)
+	tkh := GetThresholdKeyGenerator(32, 2, 2, rand.Reader)
 	tpks, _ := tkh.Generate()
 
 	plainText1 := b(13)
@@ -278,7 +278,7 @@ func TestValidate(t *testing.T) {
 }
 
 func TestCombinePartialDecryptionsZKP(t *testing.T) {
-	tkh := GetThresholdKeyGenerator(10, 2, 2, rand.Reader)
+	tkh := GetThresholdKeyGenerator(32, 2, 2, rand.Reader)
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
@@ -311,7 +311,7 @@ func TestCombinePartialDecryptionsZKP(t *testing.T) {
 }
 
 func TestCombinePartialDecryptionsWith100Shares(t *testing.T) {
-	tkh := GetThresholdKeyGenerator(10, 100, 50, rand.Reader)
+	tkh := GetThresholdKeyGenerator(32, 100, 50, rand.Reader)
 	tpks, err := tkh.Generate()
 	if err != nil {
 		t.Error(err)
@@ -338,7 +338,7 @@ func TestCombinePartialDecryptionsWith100Shares(t *testing.T) {
 }
 
 func TestVerifyDecryption(t *testing.T) {
-	tkh := GetThresholdKeyGenerator(10, 2, 2, rand.Reader)
+	tkh := GetThresholdKeyGenerator(32, 2, 2, rand.Reader)
 	tpks, err := tkh.Generate()
 
 	pk := &tpks[0].ThresholdPublicKey

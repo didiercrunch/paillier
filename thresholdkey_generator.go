@@ -19,7 +19,7 @@ import (
 //               with Applications to Electronic Voting
 //               Aarhus University, Dept. of Computer Science, BRICS
 type ThresholdKeyGenerator struct {
-	nbits                          int
+	publicKeyBitLength             int
 	TotalNumberOfDecryptionServers int
 	Threshold                      int
 	Random                         io.Reader
@@ -49,11 +49,16 @@ type ThresholdKeyGenerator struct {
 // is done on the input values.  You need to be sure that nbits is big enough
 // and that Threshold > TotalNumberOfDecryptionServers / 2.
 // The plaintext space for the key will be Z_n.
-func GetThresholdKeyGenerator(nbits, TotalNumberOfDecryptionServers, Threshold int, random io.Reader) *ThresholdKeyGenerator {
+func GetThresholdKeyGenerator(
+	publicKeyBitLength int,
+	totalNumberOfDecryptionServers int,
+	threshold int,
+	random io.Reader,
+) *ThresholdKeyGenerator {
 	ret := new(ThresholdKeyGenerator)
-	ret.nbits = nbits
-	ret.TotalNumberOfDecryptionServers = TotalNumberOfDecryptionServers
-	ret.Threshold = Threshold
+	ret.publicKeyBitLength = publicKeyBitLength // TODO: at least 32
+	ret.TotalNumberOfDecryptionServers = totalNumberOfDecryptionServers
+	ret.Threshold = threshold
 	ret.Random = random
 	return ret
 }
@@ -61,7 +66,9 @@ func GetThresholdKeyGenerator(nbits, TotalNumberOfDecryptionServers, Threshold i
 func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
 	concurrencyLevel := 4
 	timeout := 120 * time.Second
-	return GenerateSafePrime(tkg.nbits, concurrencyLevel, timeout, tkg.Random)
+	safePrimeBitLength := tkg.publicKeyBitLength / 2
+
+	return GenerateSafePrime(safePrimeBitLength, concurrencyLevel, timeout, tkg.Random)
 }
 
 func (tkg *ThresholdKeyGenerator) initPandP1() error {
