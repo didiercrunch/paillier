@@ -12,9 +12,8 @@ var MockGenerateSafePrimes = func() (*big.Int, *big.Int, error) {
 }
 
 func TestGenerateSafePrimesOfThresholdKeyGenerator(t *testing.T) {
-	tkh := new(ThresholdKeyGenerator)
-	tkh.publicKeyBitLength = 32
-	tkh.Random = rand.Reader
+	tkh := GetThresholdKeyGenerator(32, 4, 3, rand.Reader)
+
 	p, q, err := tkh.generateSafePrimes()
 	if err != nil {
 		t.Error(err)
@@ -23,27 +22,21 @@ func TestGenerateSafePrimesOfThresholdKeyGenerator(t *testing.T) {
 }
 
 func TestInitPandP1(t *testing.T) {
-	tkh := new(ThresholdKeyGenerator)
-	tkh.publicKeyBitLength = 32
-	tkh.Random = rand.Reader
+	tkh := GetThresholdKeyGenerator(32, 4, 3, rand.Reader)
 
 	tkh.initPandP1()
 	AreSafePrimes(tkh.p, tkh.p1, 16, t)
 }
 
 func TestInitQandQ1(t *testing.T) {
-	tkh := new(ThresholdKeyGenerator)
-	tkh.publicKeyBitLength = 32
-	tkh.Random = rand.Reader
+	tkh := GetThresholdKeyGenerator(32, 4, 3, rand.Reader)
 
 	tkh.initQandQ1()
 	AreSafePrimes(tkh.q, tkh.q1, 16, t)
 }
 
 func TestInitPsAndQs(t *testing.T) {
-	tkh := new(ThresholdKeyGenerator)
-	tkh.publicKeyBitLength = 32
-	tkh.Random = rand.Reader
+	tkh := GetThresholdKeyGenerator(32, 4, 3, rand.Reader)
 
 	tkh.initPsAndQs()
 
@@ -102,9 +95,7 @@ func TestInitD(t *testing.T) {
 }
 
 func TestInitNumerialValues(t *testing.T) {
-	tkh := new(ThresholdKeyGenerator)
-	tkh.publicKeyBitLength = 32
-	tkh.Random = rand.Reader
+	tkh := GetThresholdKeyGenerator(32, 4, 3, rand.Reader)
 
 	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(err)
@@ -112,10 +103,7 @@ func TestInitNumerialValues(t *testing.T) {
 }
 
 func TestGenerateHidingPolynomial(t *testing.T) {
-	tkh := new(ThresholdKeyGenerator)
-	tkh.publicKeyBitLength = 32
-	tkh.Threshold = 10
-	tkh.Random = rand.Reader
+	tkh := GetThresholdKeyGenerator(32, 15, 10, rand.Reader)
 	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(err)
 	}
@@ -137,10 +125,7 @@ func TestGenerateHidingPolynomial(t *testing.T) {
 }
 
 func TestComputeShare(t *testing.T) {
-	tkh := new(ThresholdKeyGenerator)
-	tkh.publicKeyBitLength = 32
-	tkh.Threshold = 3
-	tkh.TotalNumberOfDecryptionServers = 5
+	tkh := GetThresholdKeyGenerator(32, 5, 3, rand.Reader)
 	tkh.nm = b(103)
 	tkh.polynomialCoefficients = []*big.Int{b(29), b(88), b(51)}
 	share := tkh.computeShare(2)
@@ -150,10 +135,7 @@ func TestComputeShare(t *testing.T) {
 }
 
 func TestCreateShares(t *testing.T) {
-	tkh := new(ThresholdKeyGenerator)
-	tkh.publicKeyBitLength = 32
-	tkh.Threshold = 10
-	tkh.TotalNumberOfDecryptionServers = 100
+	tkh := GetThresholdKeyGenerator(32, 100, 10, rand.Reader)
 	tkh.Random = rand.Reader
 	if err := tkh.initNumerialValues(); err != nil {
 		t.Error(err)
