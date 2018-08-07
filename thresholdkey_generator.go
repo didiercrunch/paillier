@@ -2,6 +2,7 @@ package paillier
 
 import (
 	"crypto/rand"
+	"errors"
 	"io"
 	"math/big"
 	"time"
@@ -54,13 +55,17 @@ func GetThresholdKeyGenerator(
 	totalNumberOfDecryptionServers int,
 	threshold int,
 	random io.Reader,
-) *ThresholdKeyGenerator {
-	ret := new(ThresholdKeyGenerator)
-	ret.publicKeyBitLength = publicKeyBitLength // TODO: at least 32
-	ret.TotalNumberOfDecryptionServers = totalNumberOfDecryptionServers
-	ret.Threshold = threshold
-	ret.Random = random
-	return ret
+) (*ThresholdKeyGenerator, error) {
+	if publicKeyBitLength < 18 {
+		return nil, errors.New("Public key bit length must be at least 18 bits")
+	}
+
+	generator := new(ThresholdKeyGenerator)
+	generator.publicKeyBitLength = publicKeyBitLength
+	generator.TotalNumberOfDecryptionServers = totalNumberOfDecryptionServers
+	generator.Threshold = threshold
+	generator.Random = random
+	return generator, nil
 }
 
 func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
