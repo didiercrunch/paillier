@@ -2,7 +2,9 @@ package paillier
 
 import (
 	"crypto/rand"
+	"errors"
 	"math/big"
+	"reflect"
 	"testing"
 )
 
@@ -63,6 +65,65 @@ func TestEncryptDecryptSmall(t *testing.T) {
 	}
 }
 
+func TestCheckPlaintextSpace(t *testing.T) {
+	p := big.NewInt(13)
+	q := big.NewInt(11)
+
+	// N = pq = 143 so the plaintext space is [0, 143)
+	privateKey := CreatePrivateKey(p, q)
+
+	var tests = map[string]struct {
+		plaintext     *big.Int
+		expectedError error
+	}{
+		"plaintext less than 0": {
+			plaintext:     big.NewInt(-1),
+			expectedError: errors.New("-1 is out of allowed plaintext space [0, 143)"),
+		},
+		"plaintext equal 0": {
+			plaintext: big.NewInt(0),
+		},
+		"plaintext equal 1": {
+			plaintext: big.NewInt(1),
+		},
+		"plaintext equal 142": {
+			plaintext: big.NewInt(142),
+		},
+		"plaintext equal 143": {
+			plaintext:     big.NewInt(143),
+			expectedError: errors.New("143 is out of allowed plaintext space [0, 143)"),
+		},
+		"plaintext equal 144": {
+			plaintext:     big.NewInt(144),
+			expectedError: errors.New("144 is out of allowed plaintext space [0, 143)"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			cypher, err := privateKey.Encrypt(test.plaintext, rand.Reader)
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Errorf(
+					"Unexpected error\nExpected: %v\nActual: %v",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if test.expectedError == nil {
+				decrypted := privateKey.Decrypt(cypher)
+				if test.plaintext.Cmp(decrypted) != 0 {
+					t.Errorf(
+						"Unexpected decryption\nExpected: %v\nActual: %v",
+						test.plaintext,
+						decrypted,
+					)
+				}
+			}
+		})
+	}
+}
+
 func TestAddCyphers(t *testing.T) {
 	privateKey := CreatePrivateKey(big.NewInt(17), big.NewInt(13))
 
@@ -81,13 +142,13 @@ func TestAddCyphers(t *testing.T) {
 func TestAddCypherWithSmallKeyModulus(t *testing.T) {
 	privateKey := CreatePrivateKey(big.NewInt(7), big.NewInt(5))
 
-	cypher1, _ := privateKey.Encrypt(big.NewInt(41), rand.Reader)
-	cypher2, _ := privateKey.Encrypt(big.NewInt(219), rand.Reader)
-	cypher3, _ := privateKey.Encrypt(big.NewInt(54), rand.Reader)
+	cypher1, _ := privateKey.Encrypt(big.NewInt(30), rand.Reader)
+	cypher2, _ := privateKey.Encrypt(big.NewInt(25), rand.Reader)
+	cypher3, _ := privateKey.Encrypt(big.NewInt(11), rand.Reader)
 	cypher4 := privateKey.Add(cypher1, cypher2, cypher3)
 
 	m := privateKey.Decrypt(cypher4)
-	if m.Cmp(big.NewInt(34)) != 0 {
+	if m.Cmp(big.NewInt(31)) != 0 {
 		t.Errorf("Unexpected decrypted value [%v]", m)
 	}
 }
