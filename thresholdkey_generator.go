@@ -20,7 +20,7 @@ import (
 //               with Applications to Electronic Voting
 //               Aarhus University, Dept. of Computer Science, BRICS
 type ThresholdKeyGenerator struct {
-	publicKeyBitLength             int
+	PublicKeyBitLength             int
 	TotalNumberOfDecryptionServers int
 	Threshold                      int
 	Random                         io.Reader
@@ -70,7 +70,7 @@ func GetThresholdKeyGenerator(
 	}
 
 	return &ThresholdKeyGenerator{
-		publicKeyBitLength:             publicKeyBitLength,
+		PublicKeyBitLength:             publicKeyBitLength,
 		TotalNumberOfDecryptionServers: totalNumberOfDecryptionServers,
 		Threshold:                      threshold,
 		Random:                         random,
@@ -80,7 +80,7 @@ func GetThresholdKeyGenerator(
 func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
 	concurrencyLevel := 4
 	timeout := 120 * time.Second
-	safePrimeBitLength := tkg.publicKeyBitLength / 2
+	safePrimeBitLength := tkg.PublicKeyBitLength / 2
 
 	return GenerateSafePrime(safePrimeBitLength, concurrencyLevel, timeout, tkg.Random)
 }
