@@ -64,7 +64,7 @@ func GetThresholdKeyGenerator(
 		return nil, errors.New("Public key bit length must be an even number")
 	}
 	if publicKeyBitLength < 18 {
-		// We need to find two n-bit safe primes, P and Q which are not equal.
+		// We need to find two n-1-bit safe primes, P and Q which are not equal.
 		// This is not possible for n<18.
 		return nil, errors.New("Public key bit length must be at least 18 bits")
 	}
