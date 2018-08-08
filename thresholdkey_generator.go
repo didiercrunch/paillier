@@ -69,12 +69,12 @@ func GetThresholdKeyGenerator(
 		return nil, errors.New("Public key bit length must be at least 18 bits")
 	}
 
-	generator := new(ThresholdKeyGenerator)
-	generator.publicKeyBitLength = publicKeyBitLength
-	generator.TotalNumberOfDecryptionServers = totalNumberOfDecryptionServers
-	generator.Threshold = threshold
-	generator.Random = random
-	return generator, nil
+	return &ThresholdKeyGenerator{
+		publicKeyBitLength:             publicKeyBitLength,
+		TotalNumberOfDecryptionServers: totalNumberOfDecryptionServers,
+		Threshold:                      threshold,
+		Random:                         random,
+	}, nil
 }
 
 func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
