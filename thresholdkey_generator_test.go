@@ -14,35 +14,35 @@ var MockGenerateSafePrimes = func() (*big.Int, *big.Int, error) {
 
 func TestCreateThresholdKeyGenerator(t *testing.T) {
 	var tests = map[string]struct {
-		keyLength                      int
+		publicKeyBitLength             int
 		totalNumberOfDecryptionServers int
 		threshold                      int
 		expectedError                  error
 	}{
 		"generator successfully created for 20 bit key length": {
-			keyLength:                      20,
+			publicKeyBitLength:             20,
 			totalNumberOfDecryptionServers: 6,
 			threshold:                      5,
 		},
 		"generator can't be created for 19 bit key length": {
-			keyLength:                      19,
+			publicKeyBitLength:             19,
 			totalNumberOfDecryptionServers: 4,
 			threshold:                      3,
 			expectedError:                  errors.New("Public key bit length must be an even number"),
 		},
 		"generator successfully created for 18 bit key length": {
-			keyLength:                      18,
+			publicKeyBitLength:             18,
 			totalNumberOfDecryptionServers: 4,
 			threshold:                      3,
 		},
 		"generator can't be created for 17 bit key length": {
-			keyLength:                      17,
+			publicKeyBitLength:             17,
 			totalNumberOfDecryptionServers: 4,
 			threshold:                      3,
 			expectedError:                  errors.New("Public key bit length must be an even number"),
 		},
 		"generator can't be created for 16 bit key length": {
-			keyLength:                      16,
+			publicKeyBitLength:             16,
 			totalNumberOfDecryptionServers: 4,
 			threshold:                      3,
 			expectedError:                  errors.New("Public key bit length must be at least 18 bits"),
@@ -52,7 +52,7 @@ func TestCreateThresholdKeyGenerator(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			gen, err := GetThresholdKeyGenerator(
-				test.keyLength,
+				test.publicKeyBitLength,
 				test.totalNumberOfDecryptionServers,
 				test.threshold,
 				rand.Reader,
@@ -73,10 +73,10 @@ func TestCreateThresholdKeyGenerator(t *testing.T) {
 					)
 				}
 
-				if test.keyLength != gen.PublicKeyBitLength {
+				if test.publicKeyBitLength != gen.PublicKeyBitLength {
 					t.Fatalf(
 						"Unexpected public key length\nExpected: %v\nActual: %v",
-						test.keyLength,
+						test.publicKeyBitLength,
 						gen.PublicKeyBitLength,
 					)
 				}
@@ -103,30 +103,22 @@ func TestCreateThresholdKeyGenerator(t *testing.T) {
 
 func TestGenerateNumbersOfCorrectBitLength(t *testing.T) {
 	var tests = map[string]struct {
-		keyLength             int
-		expectedPrimeLength   int
-		expectedModulusLength int
+		publicKeyLength     int
+		expectedPrimeLength int
 	}{
-		"key bit length = 32, prime bit length = 16, modulus bit length = 32": {
-			keyLength:             32,
-			expectedPrimeLength:   16,
-			expectedModulusLength: 32,
+		"public key bit length = 32, prime bit length = 16": {
+			publicKeyLength:     32,
+			expectedPrimeLength: 16,
 		},
-		"key bit length = 64, prime bit length = 32, modulus bit length = 64": {
-			keyLength:             64,
-			expectedPrimeLength:   32,
-			expectedModulusLength: 64,
-		},
-		"key bit length = 128, prime bit length = 64, modulus bit length = 128": {
-			keyLength:             128,
-			expectedPrimeLength:   64,
-			expectedModulusLength: 128,
+		"public key bit length = 64, prime bit length = 32": {
+			publicKeyLength:     64,
+			expectedPrimeLength: 32,
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			gen, err := GetThresholdKeyGenerator(test.keyLength, 10, 6, rand.Reader)
+			gen, err := GetThresholdKeyGenerator(test.publicKeyLength, 10, 6, rand.Reader)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -139,7 +131,7 @@ func TestGenerateNumbersOfCorrectBitLength(t *testing.T) {
 			if gen.p.BitLen() != test.expectedPrimeLength {
 				t.Fatalf(
 					"Unexpected prime bit length\nExpected %v\n Actual %v",
-					test.expectedModulusLength,
+					test.expectedPrimeLength,
 					gen.p.BitLen(),
 				)
 			}
@@ -147,15 +139,15 @@ func TestGenerateNumbersOfCorrectBitLength(t *testing.T) {
 			if gen.q.BitLen() != test.expectedPrimeLength {
 				t.Fatalf(
 					"Unexpected prime bit length\nExpected %v\n Actual %v",
-					test.expectedModulusLength,
+					test.expectedPrimeLength,
 					gen.q.BitLen(),
 				)
 			}
 
-			if gen.n.BitLen() != test.expectedModulusLength {
+			if gen.n.BitLen() != test.publicKeyLength {
 				t.Fatalf(
 					"Unexpected modulus bit length\nExpected %v\n Actual %v",
-					test.expectedModulusLength,
+					test.publicKeyLength,
 					gen.n.BitLen(),
 				)
 			}
