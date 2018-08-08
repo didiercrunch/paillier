@@ -60,7 +60,7 @@ func TestAsyncGenerator(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				AreSafePrimes(p, q, test.bitLen, t)
+				IsSafePrime(p, q, test.bitLen, t)
 			}
 		})
 	}

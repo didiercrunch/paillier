@@ -49,7 +49,8 @@ type ThresholdKeyGenerator struct {
 // GetThresholdKeyGenerator is a preferable way to construct the
 // ThresholdKeyGenerator.
 // Due to the various properties that must be met for the threshold key to be
-// considered valid, the minimum public key `N` bit length is 18 bits.
+// considered valid, the minimum public key `N` bit length is 18 bits and the
+// public key bit length should be an even number.
 // The plaintext space for the key will be `Z_N`.
 func GetThresholdKeyGenerator(
 	publicKeyBitLength int,
@@ -57,7 +58,14 @@ func GetThresholdKeyGenerator(
 	threshold int,
 	random io.Reader,
 ) (*ThresholdKeyGenerator, error) {
+	if publicKeyBitLength%2 == 1 {
+		// For an odd n-bit number, we can't find two n-1-bit numbers which
+		// multiplied gives an n-bit number.
+		return nil, errors.New("Public key bit length must be an even number")
+	}
 	if publicKeyBitLength < 18 {
+		// We need to find two n-bit safe primes, P and Q which are not equal.
+		// This is not possible for n<18.
 		return nil, errors.New("Public key bit length must be at least 18 bits")
 	}
 

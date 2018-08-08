@@ -20,11 +20,17 @@ func TestCreateThresholdKeyGenerator(t *testing.T) {
 		"generator successfully created for 20 bit key length": {
 			keyLength: 20,
 		},
-
+		"generator can't be created for 19 bit key length": {
+			keyLength:     19,
+			expectedError: errors.New("Public key bit length must be an even number"),
+		},
 		"generator successfully created for 18 bit key length": {
 			keyLength: 18,
 		},
-
+		"generator can't be created for 17 bit key length": {
+			keyLength:     17,
+			expectedError: errors.New("Public key bit length must be an even number"),
+		},
 		"generator can't be created for 16 bit key length": {
 			keyLength:     16,
 			expectedError: errors.New("Public key bit length must be at least 18 bits"),
@@ -60,7 +66,7 @@ func TestGenerateSafePrimesOfThresholdKeyGenerator(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	AreSafePrimes(p, q, 16, t)
+	IsSafePrime(p, q, 16, t)
 }
 
 func TestInitPandP1(t *testing.T) {
@@ -70,7 +76,7 @@ func TestInitPandP1(t *testing.T) {
 	}
 
 	tkh.initPandP1()
-	AreSafePrimes(tkh.p, tkh.p1, 16, t)
+	IsSafePrime(tkh.p, tkh.p1, 16, t)
 }
 
 func TestInitQandQ1(t *testing.T) {
@@ -80,7 +86,7 @@ func TestInitQandQ1(t *testing.T) {
 	}
 
 	tkh.initQandQ1()
-	AreSafePrimes(tkh.q, tkh.q1, 16, t)
+	IsSafePrime(tkh.q, tkh.q1, 16, t)
 }
 
 func TestInitPsAndQs(t *testing.T) {
@@ -91,8 +97,8 @@ func TestInitPsAndQs(t *testing.T) {
 
 	tkh.initPsAndQs()
 
-	AreSafePrimes(tkh.p, tkh.p1, 16, t)
-	AreSafePrimes(tkh.q, tkh.q1, 16, t)
+	IsSafePrime(tkh.p, tkh.p1, 16, t)
+	IsSafePrime(tkh.q, tkh.q1, 16, t)
 }
 
 func TestArePsAndQsGood(t *testing.T) {
