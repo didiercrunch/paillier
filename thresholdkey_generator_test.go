@@ -14,32 +14,49 @@ var MockGenerateSafePrimes = func() (*big.Int, *big.Int, error) {
 
 func TestCreateThresholdKeyGenerator(t *testing.T) {
 	var tests = map[string]struct {
-		keyLength     int
-		expectedError error
+		keyLength                      int
+		totalNumberOfDecryptionServers int
+		threshold                      int
+		expectedError                  error
 	}{
 		"generator successfully created for 20 bit key length": {
-			keyLength: 20,
+			keyLength:                      20,
+			totalNumberOfDecryptionServers: 6,
+			threshold:                      5,
 		},
 		"generator can't be created for 19 bit key length": {
-			keyLength:     19,
-			expectedError: errors.New("Public key bit length must be an even number"),
+			keyLength:                      19,
+			totalNumberOfDecryptionServers: 4,
+			threshold:                      3,
+			expectedError:                  errors.New("Public key bit length must be an even number"),
 		},
 		"generator successfully created for 18 bit key length": {
-			keyLength: 18,
+			keyLength:                      18,
+			totalNumberOfDecryptionServers: 4,
+			threshold:                      3,
 		},
 		"generator can't be created for 17 bit key length": {
-			keyLength:     17,
-			expectedError: errors.New("Public key bit length must be an even number"),
+			keyLength:                      17,
+			totalNumberOfDecryptionServers: 4,
+			threshold:                      3,
+			expectedError:                  errors.New("Public key bit length must be an even number"),
 		},
 		"generator can't be created for 16 bit key length": {
-			keyLength:     16,
-			expectedError: errors.New("Public key bit length must be at least 18 bits"),
+			keyLength:                      16,
+			totalNumberOfDecryptionServers: 4,
+			threshold:                      3,
+			expectedError:                  errors.New("Public key bit length must be at least 18 bits"),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			gen, err := GetThresholdKeyGenerator(test.keyLength, 4, 3, rand.Reader)
+			gen, err := GetThresholdKeyGenerator(
+				test.keyLength,
+				test.totalNumberOfDecryptionServers,
+				test.threshold,
+				rand.Reader,
+			)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Fatalf(
@@ -49,8 +66,36 @@ func TestCreateThresholdKeyGenerator(t *testing.T) {
 				)
 			}
 
-			if test.expectedError == nil && gen == nil {
-				t.Fatal("Got nil generator, it should be successfully created")
+			if test.expectedError == nil {
+				if gen == nil {
+					t.Fatal(
+						"Got nil generator, it should be successfully created",
+					)
+				}
+
+				if test.keyLength != gen.PublicKeyBitLength {
+					t.Fatalf(
+						"Unexpected public key length\nExpected: %v\nActual: %v",
+						test.keyLength,
+						gen.PublicKeyBitLength,
+					)
+				}
+
+				if test.threshold != gen.Threshold {
+					t.Fatalf(
+						"Unexpected threshold\nExpected: %v\nActual: %v",
+						test.threshold,
+						gen.Threshold,
+					)
+				}
+
+				if test.totalNumberOfDecryptionServers != gen.TotalNumberOfDecryptionServers {
+					t.Fatalf(
+						"Unexpected number of decryption servers\nExpected: %v\nActual: %v",
+						test.totalNumberOfDecryptionServers,
+						gen.TotalNumberOfDecryptionServers,
+					)
+				}
 			}
 		})
 	}
