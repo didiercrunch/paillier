@@ -56,17 +56,70 @@ func TestCreateThresholdKeyGenerator(t *testing.T) {
 	}
 }
 
-func TestGenerateSafePrimesOfThresholdKeyGenerator(t *testing.T) {
-	tkh, err := GetThresholdKeyGenerator(32, 4, 3, rand.Reader)
-	if err != nil {
-		t.Fatal(err)
+func TestGenerateNumbersOfCorrectBitLength(t *testing.T) {
+	var tests = map[string]struct {
+		keyLength             int
+		expectedPrimeLength   int
+		expectedModulusLength int
+	}{
+		"key bit length = 32, prime bit length = 16, modulus bit length = 32": {
+			keyLength:             32,
+			expectedPrimeLength:   16,
+			expectedModulusLength: 32,
+		},
+		"key bit length = 64, prime bit length = 32, modulus bit length = 64": {
+			keyLength:             64,
+			expectedPrimeLength:   32,
+			expectedModulusLength: 64,
+		},
+		"key bit length = 128, prime bit length = 64, modulus bit length = 128": {
+			keyLength:             128,
+			expectedPrimeLength:   64,
+			expectedModulusLength: 128,
+		},
 	}
 
-	p, q, err := tkh.generateSafePrimes()
-	if err != nil {
-		t.Error(err)
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			gen, err := GetThresholdKeyGenerator(test.keyLength, 10, 6, rand.Reader)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = gen.initNumerialValues()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if gen.p.BitLen() != test.expectedPrimeLength {
+				t.Fatalf(
+					"Unexpected prime bit length\nExpected %v\n Actual %v",
+					test.expectedModulusLength,
+					gen.p.BitLen(),
+				)
+			}
+
+			if gen.q.BitLen() != test.expectedPrimeLength {
+				t.Fatalf(
+					"Unexpected prime bit length\nExpected %v\n Actual %v",
+					test.expectedModulusLength,
+					gen.q.BitLen(),
+				)
+			}
+
+			if gen.n.BitLen() != test.expectedModulusLength {
+				t.Fatalf(
+					"Unexpected modulus bit length\nExpected %v\n Actual %v",
+					test.expectedModulusLength,
+					gen.n.BitLen(),
+				)
+			}
+
+			if new(big.Int).Mul(gen.p, gen.q).Cmp(gen.n) != 0 {
+				t.Fatal("n != pq")
+			}
+		})
 	}
-	IsSafePrime(p, q, 16, t)
 }
 
 func TestInitPandP1(t *testing.T) {
