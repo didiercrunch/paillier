@@ -2,6 +2,7 @@ package paillier
 
 import (
 	"crypto/rand"
+	"errors"
 	"io"
 	"math/big"
 	"time"
@@ -19,18 +20,18 @@ import (
 //               with Applications to Electronic Voting
 //               Aarhus University, Dept. of Computer Science, BRICS
 type ThresholdKeyGenerator struct {
-	nbits                          int
+	PublicKeyBitLength             int
 	TotalNumberOfDecryptionServers int
 	Threshold                      int
-	Random                         io.Reader
+	random                         io.Reader
 
-	// Both p1 and q1 are primes of length nbits - 1
-	p1 *big.Int
-	q1 *big.Int
+	p *big.Int // p is prime of `PublicKeyBitLength/2` bits and `p = 2*p1 + 1`
+	q *big.Int // q is prime of `PublicKeyBitLength/2` bits and `q = 2*q1 + 1`
 
-	p       *big.Int // p is prime and p=2*p1+1
-	q       *big.Int // q is prime and q=2*q1+1
-	n       *big.Int // n=p*q
+	p1 *big.Int // p1 is prime of `PublicKeyBitLength/2 - 1` bits
+	q1 *big.Int // q1 is prime of `PublicKeyBitLength/2 - 1` bits
+
+	n       *big.Int // n=p*q and is of `PublicKeyBitLength` bits
 	m       *big.Int // m = p1*q1
 	nSquare *big.Int // nSquare = n*n
 	nm      *big.Int // nm = n*m
@@ -45,23 +46,44 @@ type ThresholdKeyGenerator struct {
 	polynomialCoefficients []*big.Int
 }
 
-// Preferable way to construct the ThresholdKeyGenerator. No verification
-// is done on the input values.  You need to be sure that nbits is big enough
-// and that Threshold > TotalNumberOfDecryptionServers / 2.
-// The plaintext space for the key will be Z_n.
-func GetThresholdKeyGenerator(nbits, TotalNumberOfDecryptionServers, Threshold int, random io.Reader) *ThresholdKeyGenerator {
-	ret := new(ThresholdKeyGenerator)
-	ret.nbits = nbits
-	ret.TotalNumberOfDecryptionServers = TotalNumberOfDecryptionServers
-	ret.Threshold = Threshold
-	ret.Random = random
-	return ret
+// GetThresholdKeyGenerator is a preferable way to construct the
+// ThresholdKeyGenerator.
+// Due to the various properties that must be met for the threshold key to be
+// considered valid, the minimum public key `N` bit length is 18 bits and the
+// public key bit length should be an even number.
+// The plaintext space for the key will be `Z_N`.
+func GetThresholdKeyGenerator(
+	publicKeyBitLength int,
+	totalNumberOfDecryptionServers int,
+	threshold int,
+	random io.Reader,
+) (*ThresholdKeyGenerator, error) {
+	if publicKeyBitLength%2 == 1 {
+		// For an odd n-bit number, we can't find two n/2-bit numbers with two
+		// the most significant bits set on which multiplied gives an n-bit
+		// number.
+		return nil, errors.New("Public key bit length must be an even number")
+	}
+	if publicKeyBitLength < 18 {
+		// We need to find two n/2-bit safe primes, P and Q which are not equal.
+		// This is not possible for n<18.
+		return nil, errors.New("Public key bit length must be at least 18 bits")
+	}
+
+	return &ThresholdKeyGenerator{
+		PublicKeyBitLength:             publicKeyBitLength,
+		TotalNumberOfDecryptionServers: totalNumberOfDecryptionServers,
+		Threshold:                      threshold,
+		random:                         random,
+	}, nil
 }
 
 func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, error) {
 	concurrencyLevel := 4
 	timeout := 120 * time.Second
-	return GenerateSafePrime(tkg.nbits, concurrencyLevel, timeout, tkg.Random)
+	safePrimeBitLength := tkg.PublicKeyBitLength / 2
+
+	return GenerateSafePrime(safePrimeBitLength, concurrencyLevel, timeout, tkg.random)
 }
 
 func (tkg *ThresholdKeyGenerator) initPandP1() error {
@@ -112,7 +134,7 @@ func (tkg *ThresholdKeyGenerator) initPsAndQs() error {
 // v generates a cyclic group of squares in Zn^2.
 func (tkg *ThresholdKeyGenerator) computeV() error {
 	var err error
-	tkg.v, err = GetRandomGeneratorOfTheQuadraticResidue(tkg.nSquare, tkg.Random)
+	tkg.v, err = GetRandomGeneratorOfTheQuadraticResidue(tkg.nSquare, tkg.random)
 	return err
 }
 
@@ -165,7 +187,7 @@ func (tkg *ThresholdKeyGenerator) generateHidingPolynomial() error {
 	tkg.polynomialCoefficients[0] = tkg.d
 	var err error
 	for i := 1; i < tkg.Threshold; i++ {
-		tkg.polynomialCoefficients[i], err = rand.Int(tkg.Random, tkg.nm)
+		tkg.polynomialCoefficients[i], err = rand.Int(tkg.random, tkg.nm)
 		if err != nil {
 			return err
 		}
