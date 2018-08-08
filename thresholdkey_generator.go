@@ -25,13 +25,13 @@ type ThresholdKeyGenerator struct {
 	Threshold                      int
 	random                         io.Reader
 
-	// Both p1 and q1 are primes of length nbits - 1
-	p1 *big.Int
-	q1 *big.Int
+	p *big.Int // p is prime of `PublicKeyBitLength/2` bits and `p = 2*p1 + 1`
+	q *big.Int // q is prime of `PublicKeyBitLength/2` bits and `q = 2*q1 + 1`
 
-	p       *big.Int // p is prime and p=2*p1+1
-	q       *big.Int // q is prime and q=2*q1+1
-	n       *big.Int // n=p*q
+	p1 *big.Int // p1 is prime of `PublicKeyBitLength/2 - 1` bits
+	q1 *big.Int // q1 is prime of `PublicKeyBitLength/2 - 1` bits
+
+	n       *big.Int // n=p*q and is of `PublicKeyBitLength` bits
 	m       *big.Int // m = p1*q1
 	nSquare *big.Int // nSquare = n*n
 	nm      *big.Int // nm = n*m
@@ -59,12 +59,13 @@ func GetThresholdKeyGenerator(
 	random io.Reader,
 ) (*ThresholdKeyGenerator, error) {
 	if publicKeyBitLength%2 == 1 {
-		// For an odd n-bit number, we can't find two n-1-bit numbers which
-		// multiplied gives an n-bit number.
+		// For an odd n-bit number, we can't find two n/2-bit numbers with two
+		// the most significant bits set on which multiplied gives an n-bit
+		// number.
 		return nil, errors.New("Public key bit length must be an even number")
 	}
 	if publicKeyBitLength < 18 {
-		// We need to find two n-1-bit safe primes, P and Q which are not equal.
+		// We need to find two n/2-bit safe primes, P and Q which are not equal.
 		// This is not possible for n<18.
 		return nil, errors.New("Public key bit length must be at least 18 bits")
 	}
