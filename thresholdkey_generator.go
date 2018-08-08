@@ -23,7 +23,7 @@ type ThresholdKeyGenerator struct {
 	PublicKeyBitLength             int
 	TotalNumberOfDecryptionServers int
 	Threshold                      int
-	Random                         io.Reader
+	random                         io.Reader
 
 	// Both p1 and q1 are primes of length nbits - 1
 	p1 *big.Int
@@ -73,7 +73,7 @@ func GetThresholdKeyGenerator(
 		PublicKeyBitLength:             publicKeyBitLength,
 		TotalNumberOfDecryptionServers: totalNumberOfDecryptionServers,
 		Threshold:                      threshold,
-		Random:                         random,
+		random:                         random,
 	}, nil
 }
 
@@ -82,7 +82,7 @@ func (tkg *ThresholdKeyGenerator) generateSafePrimes() (*big.Int, *big.Int, erro
 	timeout := 120 * time.Second
 	safePrimeBitLength := tkg.PublicKeyBitLength / 2
 
-	return GenerateSafePrime(safePrimeBitLength, concurrencyLevel, timeout, tkg.Random)
+	return GenerateSafePrime(safePrimeBitLength, concurrencyLevel, timeout, tkg.random)
 }
 
 func (tkg *ThresholdKeyGenerator) initPandP1() error {
@@ -133,7 +133,7 @@ func (tkg *ThresholdKeyGenerator) initPsAndQs() error {
 // v generates a cyclic group of squares in Zn^2.
 func (tkg *ThresholdKeyGenerator) computeV() error {
 	var err error
-	tkg.v, err = GetRandomGeneratorOfTheQuadraticResidue(tkg.nSquare, tkg.Random)
+	tkg.v, err = GetRandomGeneratorOfTheQuadraticResidue(tkg.nSquare, tkg.random)
 	return err
 }
 
@@ -186,7 +186,7 @@ func (tkg *ThresholdKeyGenerator) generateHidingPolynomial() error {
 	tkg.polynomialCoefficients[0] = tkg.d
 	var err error
 	for i := 1; i < tkg.Threshold; i++ {
-		tkg.polynomialCoefficients[i], err = rand.Int(tkg.Random, tkg.nm)
+		tkg.polynomialCoefficients[i], err = rand.Int(tkg.random, tkg.nm)
 		if err != nil {
 			return err
 		}
