@@ -46,10 +46,11 @@ type ThresholdKeyGenerator struct {
 	polynomialCoefficients []*big.Int
 }
 
-// Preferable way to construct the ThresholdKeyGenerator. No verification
-// is done on the input values.  You need to be sure that nbits is big enough
-// and that Threshold > TotalNumberOfDecryptionServers / 2.
-// The plaintext space for the key will be Z_n.
+// GetThresholdKeyGenerator is a preferable way to construct the
+// ThresholdKeyGenerator.
+// Due to the various properties that must be met for the threshold key to be
+// considered valid, the minimum public key `N` bit length is 18 bits.
+// The plaintext space for the key will be `Z_N`.
 func GetThresholdKeyGenerator(
 	publicKeyBitLength int,
 	totalNumberOfDecryptionServers int,
