@@ -124,7 +124,7 @@ func TestCheckPlaintextSpace(t *testing.T) {
 	}
 }
 
-func TestAddCyphers(t *testing.T) {
+func TestAddCiphertexts(t *testing.T) {
 	p, q := GenKeyPrimes(10)
 	sk := CreateSecretKey(p, q)
 
@@ -140,7 +140,7 @@ func TestAddCyphers(t *testing.T) {
 	}
 }
 
-func TestAddCypherWithSmallKeyModulus(t *testing.T) {
+func TestAddCiphertextWithSmallKeyModulus(t *testing.T) {
 	sk := CreateSecretKey(big.NewInt(7), big.NewInt(5))
 
 	ct1, _ := sk.Encrypt(big.NewInt(30), rand.Reader)
@@ -154,7 +154,7 @@ func TestAddCypherWithSmallKeyModulus(t *testing.T) {
 	}
 }
 
-func TestMulCypher(t *testing.T) {
+func TestMulCiphertext(t *testing.T) {
 	p, q := GenKeyPrimes(10)
 	sk := CreateSecretKey(p, q)
 
@@ -172,7 +172,7 @@ func TestMulCypher(t *testing.T) {
 	}
 }
 
-func TestMulCypherWithSmallKeyModulus(t *testing.T) {
+func TestMulCiphertextWithSmallKeyModulus(t *testing.T) {
 	sk := CreateSecretKey(big.NewInt(7), big.NewInt(5))
 
 	ct, err := sk.Encrypt(big.NewInt(30), rand.Reader)
@@ -197,7 +197,7 @@ func GenKeyPrimes(bits int) (p, q *big.Int) {
 			continue
 		}
 		q, err = rand.Prime(rand.Reader, bits)
-		if err != nil {
+		if err != nil || p.Cmp(q) == 0 {
 			continue
 		}
 

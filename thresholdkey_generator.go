@@ -243,6 +243,7 @@ func (tkg *ThresholdKeyGenerator) createViArray(shares []*big.Int) (viArray []*b
 func (tkg *ThresholdKeyGenerator) createSecretKey(i int, share *big.Int, viArray []*big.Int) *ThresholdSecretKey {
 	ret := new(ThresholdSecretKey)
 	ret.N = tkg.n
+	ret.G = new(big.Int).Add(tkg.n, big.NewInt(1))
 	ret.V = tkg.v
 
 	ret.TotalNumberOfDecryptionServers = tkg.TotalNumberOfDecryptionServers

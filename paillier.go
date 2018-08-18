@@ -8,6 +8,7 @@ import (
 
 type PublicKey struct {
 	N *big.Int
+	G *big.Int
 }
 
 func (pk *PublicKey) GetNSquare() *big.Int {
@@ -41,8 +42,7 @@ func (pk *PublicKey) EncryptWithR(m *big.Int, r *big.Int) (*Ciphertext, error) {
 	// g is _always_ equal n+1
 	// Threshold encryption is safe only for g=n+1 choice.
 	// See [DJN 10], section 5.1
-	g := new(big.Int).Add(pk.N, big.NewInt(1))
-	gm := new(big.Int).Exp(g, m, nSquare)
+	gm := new(big.Int).Exp(pk.G, m, nSquare)
 	rn := new(big.Int).Exp(r, pk.N, nSquare)
 	return &Ciphertext{new(big.Int).Mod(new(big.Int).Mul(rn, gm), nSquare)}, nil
 }
@@ -66,7 +66,7 @@ func (pk *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Ciphertext, error) 
 	return pk.EncryptWithR(m, r)
 }
 
-// Add takes an arbitrary number of cyphertexts and returns one that encodes
+// Add takes an arbitrary number of ciphertexts and returns one that encodes
 // their sum.
 //
 // It's possible because Paillier is a homomorphic encryption scheme, where
@@ -109,17 +109,17 @@ type SecretKey struct {
 
 // Decodes ciphertext into a plaintext message.
 //
-// c - cyphertext to decrypt
+// c - ciphertext to decrypt
 // N, lambda - key attributes
 //
-// D(c) = [ ((c^lambda) mod N^2) - 1) / N ] lambda^-1 mod N
+// D(c) = [ ((c^lambda)*mu mod N^2) - 1) / N ] lambda^-1 mod N
 //
 // See [KL 08] construction 11.32, page 414.
-func (sk *SecretKey) Decrypt(ct *Ciphertext) (msg *big.Int) {
+func (sk *SecretKey) Decrypt(ct *Ciphertext) *big.Int {
 	mu := new(big.Int).ModInverse(sk.Lambda, sk.N)
 	tmp := new(big.Int).Exp(ct.C, sk.Lambda, sk.GetNSquare())
-	msg = new(big.Int).Mod(new(big.Int).Mul(L(tmp, sk.N), mu), sk.N)
-	return
+	m := new(big.Int).Mod(new(big.Int).Mul(L(tmp, sk.N), mu), sk.N)
+	return m
 }
 
 type Ciphertext struct {
@@ -162,10 +162,12 @@ func computePhi(p, q *big.Int) *big.Int {
 func CreateSecretKey(p, q *big.Int) *SecretKey {
 	n := new(big.Int).Mul(p, q)
 	lambda := computePhi(p, q)
+	g := new(big.Int).Add(n, big.NewInt(1))
 
 	return &SecretKey{
 		PublicKey: PublicKey{
 			N: n,
+			G: g,
 		},
 		Lambda: lambda,
 	}
