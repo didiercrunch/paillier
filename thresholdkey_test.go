@@ -234,7 +234,7 @@ func TestEncryptingDecrypting(t *testing.T) {
 		t.Error(err)
 	}
 	if n(message) != n(message2) {
-		t.Error("The decrypted cyphered is not original massage but ", message2)
+		t.Error("The decrypted ciphered is not original massage but ", message2)
 	}
 }
 
@@ -249,13 +249,13 @@ func TestHomomorphicThresholdEncryption(t *testing.T) {
 	plainText1 := b(13)
 	plainText2 := b(19)
 
-	cypher1, _ := tpks[0].Encrypt(plainText1, rand.Reader)
-	cypher2, _ := tpks[1].Encrypt(plainText2, rand.Reader)
+	cipher1, _ := tpks[0].Encrypt(plainText1, rand.Reader)
+	cipher2, _ := tpks[1].Encrypt(plainText2, rand.Reader)
 
-	cypher3 := tpks[0].Add(cypher1, cypher2)
+	cipher3 := tpks[0].Add(cipher1, cipher2)
 
-	share1 := tpks[0].Decrypt(cypher3.C)
-	share2 := tpks[1].Decrypt(cypher3.C)
+	share1 := tpks[0].Decrypt(cipher3.C)
+	share2 := tpks[1].Decrypt(cipher3.C)
 
 	combined, _ := tpks[0].CombinePartialDecryptions([]*PartialDecryption{share1, share2})
 
@@ -321,7 +321,7 @@ func TestCombinePartialDecryptionsZKP(t *testing.T) {
 		t.Error(err)
 	}
 	if n(message) != n(message2) {
-		t.Error("The decrypted cyphered is not original massage but ", message2)
+		t.Error("The decrypted ciphered is not original massage but ", message2)
 	}
 	share1.E = b(687687678)
 	_, err = tpks[0].CombinePartialDecryptionsZKP([]*PartialDecryptionZKP{share1, share2})
@@ -357,7 +357,7 @@ func TestCombinePartialDecryptionsWith100Shares(t *testing.T) {
 		t.Error(err)
 	}
 	if n(message) != n(message2) {
-		t.Error("The decrypted cyphered is not original massage but ", message2)
+		t.Error("The decrypted ciphered is not original massage but ", message2)
 	}
 }
 

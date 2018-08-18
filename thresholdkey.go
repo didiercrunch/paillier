@@ -171,7 +171,7 @@ func (tk *ThresholdPublicKey) VerifyDecryption(encryptedMessage, decryptedMessag
 	return nil
 }
 
-// Private key for a threshold Paillier scheme. Holds skate information
+// Secret key for a threshold Paillier scheme. Holds skate information
 // for the given decryption server.
 // `Id` is the unique identifier of a decryption server and `Share` is a secret
 // share generated from hiding polynomial and is used for a partial share decryption.
@@ -297,7 +297,7 @@ type PartialDecryption struct {
 //
 // In our case:
 //
-// Decryption server i wants to prove that he indeed raised the cyphertext to
+// Decryption server i wants to prove that he indeed raised the ciphertext to
 // his secret exponent s_i during partial decryption.
 // This is essentialy a protocol for the equality of discrete logs,
 // log_{c^4}(c_i^2) = log_v(v_i).
@@ -309,7 +309,7 @@ type PartialDecryption struct {
 //   E = HASH(a, b, c^4, c_i^2), where
 //     a = (c^4)^r mod n^2
 //     b = V^r mod n^2
-//     c is a cyphertext,
+//     c is a ciphertext,
 //     V is a generator from ThresholdKey.V
 //     c_i is a partial decryption for this server
 // - Compute Z as:
