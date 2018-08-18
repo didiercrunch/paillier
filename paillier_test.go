@@ -54,11 +54,11 @@ func TestEncryptDecryptSmall(t *testing.T) {
 		SecretKey := CreateSecretKey(p, q)
 
 		initialValue := big.NewInt(100)
-		cypher, err := SecretKey.Encrypt(initialValue, rand.Reader)
+		ct, err := SecretKey.Encrypt(initialValue, rand.Reader)
 		if err != nil {
 			t.Error(err)
 		}
-		returnedValue := SecretKey.Decrypt(cypher)
+		returnedValue := SecretKey.Decrypt(ct)
 		if initialValue.Cmp(returnedValue) != 0 {
 			t.Error("wrong decryption ", returnedValue, " is not ", initialValue)
 		}
@@ -101,7 +101,7 @@ func TestCheckPlaintextSpace(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			cypher, err := SecretKey.Encrypt(test.plaintext, rand.Reader)
+			ct, err := SecretKey.Encrypt(test.plaintext, rand.Reader)
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Errorf(
 					"Unexpected error\nExpected: %v\nActual: %v",
@@ -111,7 +111,7 @@ func TestCheckPlaintextSpace(t *testing.T) {
 			}
 
 			if test.expectedError == nil {
-				decrypted := SecretKey.Decrypt(cypher)
+				decrypted := SecretKey.Decrypt(ct)
 				if test.plaintext.Cmp(decrypted) != 0 {
 					t.Errorf(
 						"Unexpected decryption\nExpected: %v\nActual: %v",
@@ -156,12 +156,12 @@ func TestAddCypherWithSmallKeyModulus(t *testing.T) {
 func TestMulCypher(t *testing.T) {
 	SecretKey := CreateSecretKey(big.NewInt(17), big.NewInt(13))
 
-	cypher, err := SecretKey.Encrypt(big.NewInt(3), rand.Reader)
+	ct, err := SecretKey.Encrypt(big.NewInt(3), rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cypherMultiple := SecretKey.Mul(cypher, big.NewInt(7))
+	cypherMultiple := SecretKey.Mul(ct, big.NewInt(7))
 	multiple := SecretKey.Decrypt(cypherMultiple)
 
 	// 3 * 7 = 21
@@ -173,12 +173,12 @@ func TestMulCypher(t *testing.T) {
 func TestMulCypherWithSmallKeyModulus(t *testing.T) {
 	SecretKey := CreateSecretKey(big.NewInt(7), big.NewInt(5))
 
-	cypher, err := SecretKey.Encrypt(big.NewInt(30), rand.Reader)
+	ct, err := SecretKey.Encrypt(big.NewInt(30), rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cypherMultiple := SecretKey.Mul(cypher, big.NewInt(93))
+	cypherMultiple := SecretKey.Mul(ct, big.NewInt(93))
 	multiple := SecretKey.Decrypt(cypherMultiple)
 
 	// (30*93) mod (7*5) = 25

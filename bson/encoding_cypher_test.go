@@ -8,11 +8,11 @@ import (
 )
 
 func TestCypherBsonSerialization(t *testing.T) {
-	cypher := &paillier.Cypher{
+	ct := &paillier.Ciphertext{
 		C: b(5),
 	}
 
-	serialized, err := SerializeCypher(cypher)
+	serialized, err := SerializeCypher(ct)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,11 +22,11 @@ func TestCypherBsonSerialization(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(cypher, deserialized) {
+	if !reflect.DeepEqual(ct, deserialized) {
 		t.Errorf(
 			"Unexpected serialization result\nActual: %v\nExpected: %v\n",
 			deserialized,
-			cypher,
+			ct,
 		)
 	}
 }

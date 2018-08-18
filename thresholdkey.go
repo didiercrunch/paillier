@@ -181,7 +181,7 @@ type ThresholdSecretKey struct {
 	Share *big.Int
 }
 
-// Decrypts the cypher text and returns the partial decryption
+// Decrypts the ct text and returns the partial decryption
 func (tpk *ThresholdSecretKey) Decrypt(c *big.Int) *PartialDecryption {
 	ret := new(PartialDecryption)
 	ret.Id = tpk.Id
@@ -334,7 +334,7 @@ type PartialDecryptionZKP struct {
 	Key *ThresholdPublicKey // the public key used to encrypt
 	E   *big.Int            // the challenge
 	Z   *big.Int            // the value needed to check to verify the decryption
-	C   *big.Int            // the input cypher text
+	C   *big.Int            // the input ct text
 }
 
 func (pd *PartialDecryptionZKP) verifyPart1() *big.Int {

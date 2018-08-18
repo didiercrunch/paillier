@@ -374,15 +374,15 @@ func TestVerifyDecryption(t *testing.T) {
 		t.Error(err)
 	}
 	expt := b(101)
-	cypher, err := tpks[0].Encrypt(expt, rand.Reader)
+	ct, err := tpks[0].Encrypt(expt, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
-	pd1, err := tpks[0].DecryptAndProduceZNP(cypher.C, rand.Reader)
+	pd1, err := tpks[0].DecryptAndProduceZNP(ct.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
-	pd2, err := tpks[1].DecryptAndProduceZNP(cypher.C, rand.Reader)
+	pd2, err := tpks[1].DecryptAndProduceZNP(ct.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
@@ -391,13 +391,13 @@ func TestVerifyDecryption(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = pk.VerifyDecryption(cypher.C, b(101), pds); err != nil {
+	if err = pk.VerifyDecryption(ct.C, b(101), pds); err != nil {
 		t.Error(err)
 	}
-	if err = pk.VerifyDecryption(cypher.C, b(100), pds); err == nil {
+	if err = pk.VerifyDecryption(ct.C, b(100), pds); err == nil {
 		t.Error(err)
 	}
-	if err = pk.VerifyDecryption(new(big.Int).Add(b(1), cypher.C), b(101), pds); err == nil {
+	if err = pk.VerifyDecryption(new(big.Int).Add(b(1), ct.C), b(101), pds); err == nil {
 		t.Error(err)
 	}
 }

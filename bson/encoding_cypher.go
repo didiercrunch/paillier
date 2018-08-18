@@ -9,15 +9,15 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type SerializableCypher paillier.Cypher
+type SerializableCypher paillier.Ciphertext
 
-// Serializes Cypher to BSON
-func SerializeCypher(cypher *paillier.Cypher) ([]byte, error) {
-	return bson.Marshal(toSerializableCypher(cypher))
+// Serializes Ciphertext to BSON
+func SerializeCypher(ct *paillier.Ciphertext) ([]byte, error) {
+	return bson.Marshal(toSerializableCypher(ct))
 }
 
-// Deserializes BSON to Cypher
-func DeserializeCypher(data []byte) (*paillier.Cypher, error) {
+// Deserializes BSON to Ciphertext
+func DeserializeCypher(data []byte) (*paillier.Ciphertext, error) {
 	serializable := new(SerializableCypher)
 	if err := bson.Unmarshal(data, serializable); err != nil {
 		return nil, err
@@ -26,13 +26,13 @@ func DeserializeCypher(data []byte) (*paillier.Cypher, error) {
 	return toOriginalCypher(serializable), nil
 }
 
-func toSerializableCypher(cypher *paillier.Cypher) *SerializableCypher {
-	serializable := SerializableCypher(*cypher)
+func toSerializableCypher(ct *paillier.Ciphertext) *SerializableCypher {
+	serializable := SerializableCypher(*ct)
 	return &serializable
 }
 
-func toOriginalCypher(serializable *SerializableCypher) *paillier.Cypher {
-	original := paillier.Cypher(*serializable)
+func toOriginalCypher(serializable *SerializableCypher) *paillier.Ciphertext {
+	original := paillier.Ciphertext(*serializable)
 	return &original
 }
 
@@ -40,17 +40,17 @@ type dbCypher struct {
 	C string
 }
 
-func (cypher *SerializableCypher) GetBSON() (interface{}, error) {
-	return &dbCypher{fmt.Sprintf("%x", cypher.C)}, nil
+func (ct *SerializableCypher) GetBSON() (interface{}, error) {
+	return &dbCypher{fmt.Sprintf("%x", ct.C)}, nil
 }
 
-func (cypher *SerializableCypher) SetBSON(raw bson.Raw) error {
+func (ct *SerializableCypher) SetBSON(raw bson.Raw) error {
 	c := dbCypher{}
 	if err := raw.Unmarshal(&c); err != nil {
 		return err
 	}
 	var ok bool
-	cypher.C, ok = new(big.Int).SetString(c.C, 16)
+	ct.C, ok = new(big.Int).SetString(c.C, 16)
 	if !ok {
 		return errors.New("big int not in hexadecimal format")
 	}

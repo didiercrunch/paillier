@@ -14,7 +14,7 @@ func (pk *PublicKey) GetNSquare() *big.Int {
 	return new(big.Int).Mul(pk.N, pk.N)
 }
 
-// EncryptWithR encrypts a plaintext into a cypher one with random `r` specified
+// EncryptWithR encrypts a plaintext into a ct one with random `r` specified
 // in the argument. The plain text must be smaller that N and bigger than or
 // equal zero. `r` is the randomness used to encrypt the plaintext. `r` must be
 // a random element from a multiplicative group of integers modulo N.
@@ -27,7 +27,7 @@ func (pk *PublicKey) GetNSquare() *big.Int {
 // E(m, r) = [(1 + N) r^N] mod N^2
 //
 // See [KL 08] construction 11.32, page 414.
-func (pk *PublicKey) EncryptWithR(m *big.Int, r *big.Int) (*Cypher, error) {
+func (pk *PublicKey) EncryptWithR(m *big.Int, r *big.Int) (*Ciphertext, error) {
 	if m.Cmp(ZERO) == -1 || m.Cmp(pk.N) != -1 { // m < 0 || m >= N  ?
 		return nil, fmt.Errorf(
 			"%v is out of allowed plaintext space [0, %v)",
@@ -44,10 +44,10 @@ func (pk *PublicKey) EncryptWithR(m *big.Int, r *big.Int) (*Cypher, error) {
 	g := new(big.Int).Add(pk.N, big.NewInt(1))
 	gm := new(big.Int).Exp(g, m, nSquare)
 	rn := new(big.Int).Exp(r, pk.N, nSquare)
-	return &Cypher{new(big.Int).Mod(new(big.Int).Mul(rn, gm), nSquare)}, nil
+	return &Ciphertext{new(big.Int).Mod(new(big.Int).Mul(rn, gm), nSquare)}, nil
 }
 
-// Encrypt a plaintext into a cypher one. The plain text must be smaller that
+// Encrypt a plaintext into a ct one. The plain text must be smaller that
 // N and bigger than or equal zero. random is usually rand.Reader from the
 // package crypto/rand.
 //
@@ -57,7 +57,7 @@ func (pk *PublicKey) EncryptWithR(m *big.Int, r *big.Int) (*Cypher, error) {
 // See [KL 08] construction 11.32, page 414.
 //
 // Returns an error if an error has be returned by io.Reader.
-func (pk *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
+func (pk *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Ciphertext, error) {
 	r, err := GetRandomNumberInMultiplicativeGroup(pk.N, random)
 	if err != nil {
 		return nil, err
@@ -74,31 +74,31 @@ func (pk *PublicKey) Encrypt(m *big.Int, random io.Reader) (*Cypher, error) {
 // plaintexts:
 //
 // D( (E(m1) * E(m2) mod n^2) ) = m1 + m2 mod n
-func (pk *PublicKey) Add(cypher ...*Cypher) *Cypher {
+func (pk *PublicKey) Add(ct ...*Ciphertext) *Ciphertext {
 	accumulator := big.NewInt(1)
 
-	for _, c := range cypher {
+	for _, c := range ct {
 		accumulator = new(big.Int).Mod(
 			new(big.Int).Mul(accumulator, c.C),
 			pk.GetNSquare(),
 		)
 	}
 
-	return &Cypher{
+	return &Ciphertext{
 		C: accumulator,
 	}
 }
 
-// Mul returns a product of `cypher` and `scalar` without decrypting `cypher`.
+// Mul returns a product of `ct` and `scalar` without decrypting `ct`.
 //
 // It's possible because Paillier is a homomorphic encryption scheme, where
 // an encrypted plaintext `m` raised to an integer `k` will decrypt to the
 // product of the plaintext `m` and `k`:
 //
 // D( E(m)^k mod N^2 ) = km mod N
-func (pk *PublicKey) Mul(cypher *Cypher, scalar *big.Int) *Cypher {
-	return &Cypher{
-		C: new(big.Int).Exp(cypher.C, scalar, pk.GetNSquare()),
+func (pk *PublicKey) Mul(ct *Ciphertext, scalar *big.Int) *Ciphertext {
+	return &Ciphertext{
+		C: new(big.Int).Exp(ct.C, scalar, pk.GetNSquare()),
 	}
 }
 
@@ -115,18 +115,18 @@ type SecretKey struct {
 // D(c) = [ ((c^lambda) mod N^2) - 1) / N ] lambda^-1 mod N
 //
 // See [KL 08] construction 11.32, page 414.
-func (sk *SecretKey) Decrypt(cypher *Cypher) (msg *big.Int) {
+func (sk *SecretKey) Decrypt(ct *Ciphertext) (msg *big.Int) {
 	mu := new(big.Int).ModInverse(sk.Lambda, sk.N)
-	tmp := new(big.Int).Exp(cypher.C, sk.Lambda, sk.GetNSquare())
+	tmp := new(big.Int).Exp(ct.C, sk.Lambda, sk.GetNSquare())
 	msg = new(big.Int).Mod(new(big.Int).Mul(L(tmp, sk.N), mu), sk.N)
 	return
 }
 
-type Cypher struct {
+type Ciphertext struct {
 	C *big.Int
 }
 
-func (this *Cypher) String() string {
+func (this *Ciphertext) String() string {
 	return fmt.Sprintf("%x", this.C)
 }
 
