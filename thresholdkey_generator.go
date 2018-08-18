@@ -240,8 +240,8 @@ func (tkg *ThresholdKeyGenerator) createViArray(shares []*big.Int) (viArray []*b
 	return viArray
 }
 
-func (tkg *ThresholdKeyGenerator) createPrivateKey(i int, share *big.Int, viArray []*big.Int) *ThresholdPrivateKey {
-	ret := new(ThresholdPrivateKey)
+func (tkg *ThresholdKeyGenerator) createSecretKey(i int, share *big.Int, viArray []*big.Int) *ThresholdSecretKey {
+	ret := new(ThresholdSecretKey)
 	ret.N = tkg.n
 	ret.V = tkg.v
 
@@ -253,22 +253,22 @@ func (tkg *ThresholdKeyGenerator) createPrivateKey(i int, share *big.Int, viArra
 	return ret
 }
 
-func (tkg *ThresholdKeyGenerator) createPrivateKeys() []*ThresholdPrivateKey {
+func (tkg *ThresholdKeyGenerator) createSecretKeys() []*ThresholdSecretKey {
 	shares := tkg.createShares()
 	viArray := tkg.createViArray(shares)
-	ret := make([]*ThresholdPrivateKey, tkg.TotalNumberOfDecryptionServers)
+	ret := make([]*ThresholdSecretKey, tkg.TotalNumberOfDecryptionServers)
 	for i := 0; i < tkg.TotalNumberOfDecryptionServers; i++ {
-		ret[i] = tkg.createPrivateKey(i, shares[i], viArray)
+		ret[i] = tkg.createSecretKey(i, shares[i], viArray)
 	}
 	return ret
 }
 
-func (tkg *ThresholdKeyGenerator) Generate() ([]*ThresholdPrivateKey, error) {
+func (tkg *ThresholdKeyGenerator) Generate() ([]*ThresholdSecretKey, error) {
 	if err := tkg.initNumerialValues(); err != nil {
 		return nil, err
 	}
 	if err := tkg.generateHidingPolynomial(); err != nil {
 		return nil, err
 	}
-	return tkg.createPrivateKeys(), nil
+	return tkg.createSecretKeys(), nil
 }

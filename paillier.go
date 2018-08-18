@@ -102,7 +102,7 @@ func (pk *PublicKey) Mul(cypher *Cypher, scalar *big.Int) *Cypher {
 	}
 }
 
-type PrivateKey struct {
+type SecretKey struct {
 	PublicKey
 	Lambda *big.Int
 }
@@ -115,7 +115,7 @@ type PrivateKey struct {
 // D(c) = [ ((c^lambda) mod N^2) - 1) / N ] lambda^-1 mod N
 //
 // See [KL 08] construction 11.32, page 414.
-func (priv *PrivateKey) Decrypt(cypher *Cypher) (msg *big.Int) {
+func (priv *SecretKey) Decrypt(cypher *Cypher) (msg *big.Int) {
 	mu := new(big.Int).ModInverse(priv.Lambda, priv.N)
 	tmp := new(big.Int).Exp(cypher.C, priv.Lambda, priv.GetNSquare())
 	msg = new(big.Int).Mod(new(big.Int).Mul(L(tmp, priv.N), mu), priv.N)
@@ -143,7 +143,7 @@ func computePhi(p, q *big.Int) *big.Int {
 	return new(big.Int).Mul(minusOne(p), minusOne(q))
 }
 
-// CreatePrivateKey generates a Paillier private key accepting two large prime
+// CreateSecretKey generates a Paillier private key accepting two large prime
 // numbers of equal length or other such that gcd(pq, (p-1)(q-1)) = 1.
 //
 // Algorithm is based on approach described in [KL 08], construction 11.32,
@@ -159,11 +159,11 @@ func computePhi(p, q *big.Int) *big.Int {
 //               A Generalization of Paillier’s Public-Key System
 //               with Applications to Electronic Voting
 //               Aarhus University, Dept. of Computer Science, BRICS
-func CreatePrivateKey(p, q *big.Int) *PrivateKey {
+func CreateSecretKey(p, q *big.Int) *SecretKey {
 	n := new(big.Int).Mul(p, q)
 	lambda := computePhi(p, q)
 
-	return &PrivateKey{
+	return &SecretKey{
 		PublicKey: PublicKey{
 			N: n,
 		},

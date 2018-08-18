@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func getThresholdPrivateKey() *ThresholdPrivateKey {
+func getThresholdSecretKey() *ThresholdSecretKey {
 	tkh, err := GetThresholdKeyGenerator(32, 10, 6, rand.Reader)
 	if err != nil {
 		panic(err)
@@ -55,7 +55,7 @@ func TestCombineSharesConstant(t *testing.T) {
 }
 
 func TestDecrypt(t *testing.T) {
-	key := new(ThresholdPrivateKey)
+	key := new(ThresholdSecretKey)
 	key.TotalNumberOfDecryptionServers = 10
 	key.N = b(101 * 103)
 	key.Share = b(862)
@@ -73,7 +73,7 @@ func TestDecrypt(t *testing.T) {
 }
 
 func TestCopyVi(t *testing.T) {
-	key := new(ThresholdPrivateKey)
+	key := new(ThresholdSecretKey)
 	key.Vi = []*big.Int{b(34), b(2), b(29)}
 	vi := key.copyVi()
 	if !reflect.DeepEqual(vi, key.Vi) {
@@ -86,7 +86,7 @@ func TestCopyVi(t *testing.T) {
 }
 
 func TestEncryptWithThresholdKey(t *testing.T) {
-	pd := getThresholdPrivateKey()
+	pd := getThresholdSecretKey()
 	_, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Fail()
@@ -94,7 +94,7 @@ func TestEncryptWithThresholdKey(t *testing.T) {
 }
 
 func TestDecryptWithThresholdKey(t *testing.T) {
-	pd := getThresholdPrivateKey()
+	pd := getThresholdSecretKey()
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Fail()
@@ -131,7 +131,7 @@ func TestVerifyPart2(t *testing.T) {
 }
 
 func TestDecryptAndProduceZNP(t *testing.T) {
-	pd := getThresholdPrivateKey()
+	pd := getThresholdSecretKey()
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Error(err)
@@ -283,7 +283,7 @@ func TestDecryption(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	pk := getThresholdPrivateKey()
+	pk := getThresholdSecretKey()
 	if err := pk.Validate(rand.Reader); err != nil {
 		t.Error(err)
 	}

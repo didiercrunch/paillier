@@ -175,14 +175,14 @@ func (tk *ThresholdPublicKey) VerifyDecryption(encryptedMessage, decryptedMessag
 // for the given decryption server.
 // `Id` is the unique identifier of a decryption server and `Share` is a secret
 // share generated from hiding polynomial and is used for a partial share decryption.
-type ThresholdPrivateKey struct {
+type ThresholdSecretKey struct {
 	ThresholdPublicKey
 	Id    int
 	Share *big.Int
 }
 
 // Decrypts the cypher text and returns the partial decryption
-func (tpk *ThresholdPrivateKey) Decrypt(c *big.Int) *PartialDecryption {
+func (tpk *ThresholdSecretKey) Decrypt(c *big.Int) *PartialDecryption {
 	ret := new(PartialDecryption)
 	ret.Id = tpk.Id
 	exp := new(big.Int).Mul(tpk.Share, new(big.Int).Mul(TWO, tpk.delta()))
@@ -191,7 +191,7 @@ func (tpk *ThresholdPrivateKey) Decrypt(c *big.Int) *PartialDecryption {
 	return ret
 }
 
-func (tpk *ThresholdPrivateKey) copyVi() []*big.Int {
+func (tpk *ThresholdSecretKey) copyVi() []*big.Int {
 	ret := make([]*big.Int, len(tpk.Vi))
 	for i, vi := range tpk.Vi {
 		ret[i] = new(big.Int).Add(vi, big.NewInt(0))
@@ -199,7 +199,7 @@ func (tpk *ThresholdPrivateKey) copyVi() []*big.Int {
 	return ret
 }
 
-func (tpk *ThresholdPrivateKey) getThresholdKey() *ThresholdPublicKey {
+func (tpk *ThresholdSecretKey) getThresholdKey() *ThresholdPublicKey {
 	ret := new(ThresholdPublicKey)
 	ret.Threshold = tpk.Threshold
 	ret.TotalNumberOfDecryptionServers = tpk.TotalNumberOfDecryptionServers
@@ -209,13 +209,13 @@ func (tpk *ThresholdPrivateKey) getThresholdKey() *ThresholdPublicKey {
 	return ret
 }
 
-func (tpk *ThresholdPrivateKey) computeZ(r, e *big.Int) *big.Int {
+func (tpk *ThresholdSecretKey) computeZ(r, e *big.Int) *big.Int {
 	tmp := new(big.Int).Mul(e, tpk.delta())
 	tmp = new(big.Int).Mul(tmp, tpk.Share)
 	return new(big.Int).Add(r, tmp)
 }
 
-func (tpk *ThresholdPrivateKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
+func (tpk *ThresholdSecretKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
 	hash := sha256.New()
 	hash.Write(a.Bytes())
 	hash.Write(b.Bytes())
@@ -224,7 +224,7 @@ func (tpk *ThresholdPrivateKey) computeHash(a, b, c4, ci2 *big.Int) *big.Int {
 	return new(big.Int).SetBytes(hash.Sum([]byte{}))
 }
 
-func (tpk *ThresholdPrivateKey) DecryptAndProduceZNP(c *big.Int, random io.Reader) (*PartialDecryptionZKP, error) {
+func (tpk *ThresholdSecretKey) DecryptAndProduceZNP(c *big.Int, random io.Reader) (*PartialDecryptionZKP, error) {
 	pd := new(PartialDecryptionZKP)
 	pd.Key = tpk.getThresholdKey()
 	pd.C = c
@@ -255,7 +255,7 @@ func (tpk *ThresholdPrivateKey) DecryptAndProduceZNP(c *big.Int, random io.Reade
 
 // Verifies if the partial decryption key is well formed.  If well formed,
 // the method return nil else an explicative error is returned.
-func (tpk *ThresholdPrivateKey) Validate(random io.Reader) error {
+func (tpk *ThresholdSecretKey) Validate(random io.Reader) error {
 	m, err := rand.Int(random, tpk.N)
 	if err != nil {
 		return err
@@ -281,7 +281,7 @@ type PartialDecryption struct {
 
 // A non-interactive ZKP based on the Fiat–Shamir heuristic. This algorithm
 // proves that the decryption server indeed raised secret to his secret exponent
-// (`ThresholdPrivateKey.Share`) by comparison with the public verification key
+// (`ThresholdSecretKey.Share`) by comparison with the public verification key
 // (`ThresholdKey.Vi`). Recall that v_i = v^(delta s_i).
 //
 // The Fiat-Shamir is a non-interactive proof of knowledge heuristic.
