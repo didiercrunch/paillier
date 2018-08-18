@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func getThresholdPrivateKey() *ThresholdPrivateKey {
+func getThresholdSecretKey() *ThresholdSecretKey {
 	tkh, err := GetThresholdKeyGenerator(32, 10, 6, rand.Reader)
 	if err != nil {
 		panic(err)
@@ -55,7 +55,7 @@ func TestCombineSharesConstant(t *testing.T) {
 }
 
 func TestDecrypt(t *testing.T) {
-	key := new(ThresholdPrivateKey)
+	key := new(ThresholdSecretKey)
 	key.TotalNumberOfDecryptionServers = 10
 	key.N = b(101 * 103)
 	key.Share = b(862)
@@ -73,7 +73,7 @@ func TestDecrypt(t *testing.T) {
 }
 
 func TestCopyVi(t *testing.T) {
-	key := new(ThresholdPrivateKey)
+	key := new(ThresholdSecretKey)
 	key.Vi = []*big.Int{b(34), b(2), b(29)}
 	vi := key.copyVi()
 	if !reflect.DeepEqual(vi, key.Vi) {
@@ -86,7 +86,7 @@ func TestCopyVi(t *testing.T) {
 }
 
 func TestEncryptWithThresholdKey(t *testing.T) {
-	pd := getThresholdPrivateKey()
+	pd := getThresholdSecretKey()
 	_, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Fail()
@@ -94,7 +94,7 @@ func TestEncryptWithThresholdKey(t *testing.T) {
 }
 
 func TestDecryptWithThresholdKey(t *testing.T) {
-	pd := getThresholdPrivateKey()
+	pd := getThresholdSecretKey()
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Fail()
@@ -130,18 +130,18 @@ func TestVerifyPart2(t *testing.T) {
 	}
 }
 
-func TestDecryptAndProduceZNP(t *testing.T) {
-	pd := getThresholdPrivateKey()
+func TestDecryptAndProduceZKP(t *testing.T) {
+	pd := getThresholdSecretKey()
 	c, err := pd.Encrypt(big.NewInt(876), rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
-	znp, err := pd.DecryptAndProduceZNP(c.C, rand.Reader)
+	ZKP, err := pd.DecryptAndProduceZKP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if !znp.Verify() {
+	if !ZKP.Verify() {
 		t.Fail()
 	}
 }
@@ -234,7 +234,7 @@ func TestEncryptingDecrypting(t *testing.T) {
 		t.Error(err)
 	}
 	if n(message) != n(message2) {
-		t.Error("The decrypted cyphered is not original massage but ", message2)
+		t.Error("The decrypted ciphered is not original massage but ", message2)
 	}
 }
 
@@ -249,13 +249,13 @@ func TestHomomorphicThresholdEncryption(t *testing.T) {
 	plainText1 := b(13)
 	plainText2 := b(19)
 
-	cypher1, _ := tpks[0].Encrypt(plainText1, rand.Reader)
-	cypher2, _ := tpks[1].Encrypt(plainText2, rand.Reader)
+	cipher1, _ := tpks[0].Encrypt(plainText1, rand.Reader)
+	cipher2, _ := tpks[1].Encrypt(plainText2, rand.Reader)
 
-	cypher3 := tpks[0].Add(cypher1, cypher2)
+	cipher3 := tpks[0].Add(cipher1, cipher2)
 
-	share1 := tpks[0].Decrypt(cypher3.C)
-	share2 := tpks[1].Decrypt(cypher3.C)
+	share1 := tpks[0].Decrypt(cipher3.C)
+	share2 := tpks[1].Decrypt(cipher3.C)
 
 	combined, _ := tpks[0].CombinePartialDecryptions([]*PartialDecryption{share1, share2})
 
@@ -283,7 +283,7 @@ func TestDecryption(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	pk := getThresholdPrivateKey()
+	pk := getThresholdSecretKey()
 	if err := pk.Validate(rand.Reader); err != nil {
 		t.Error(err)
 	}
@@ -308,11 +308,11 @@ func TestCombinePartialDecryptionsZKP(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	share1, err := tpks[0].DecryptAndProduceZNP(c.C, rand.Reader)
+	share1, err := tpks[0].DecryptAndProduceZKP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
-	share2, err := tpks[1].DecryptAndProduceZNP(c.C, rand.Reader)
+	share2, err := tpks[1].DecryptAndProduceZKP(c.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
@@ -321,7 +321,7 @@ func TestCombinePartialDecryptionsZKP(t *testing.T) {
 		t.Error(err)
 	}
 	if n(message) != n(message2) {
-		t.Error("The decrypted cyphered is not original massage but ", message2)
+		t.Error("The decrypted ciphered is not original massage but ", message2)
 	}
 	share1.E = b(687687678)
 	_, err = tpks[0].CombinePartialDecryptionsZKP([]*PartialDecryptionZKP{share1, share2})
@@ -357,7 +357,7 @@ func TestCombinePartialDecryptionsWith100Shares(t *testing.T) {
 		t.Error(err)
 	}
 	if n(message) != n(message2) {
-		t.Error("The decrypted cyphered is not original massage but ", message2)
+		t.Error("The decrypted ciphered is not original massage but ", message2)
 	}
 }
 
@@ -374,15 +374,15 @@ func TestVerifyDecryption(t *testing.T) {
 		t.Error(err)
 	}
 	expt := b(101)
-	cypher, err := tpks[0].Encrypt(expt, rand.Reader)
+	ct, err := tpks[0].Encrypt(expt, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
-	pd1, err := tpks[0].DecryptAndProduceZNP(cypher.C, rand.Reader)
+	pd1, err := tpks[0].DecryptAndProduceZKP(ct.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
-	pd2, err := tpks[1].DecryptAndProduceZNP(cypher.C, rand.Reader)
+	pd2, err := tpks[1].DecryptAndProduceZKP(ct.C, rand.Reader)
 	if err != nil {
 		t.Error(err)
 	}
@@ -391,13 +391,13 @@ func TestVerifyDecryption(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = pk.VerifyDecryption(cypher.C, b(101), pds); err != nil {
+	if err = pk.VerifyDecryption(ct.C, b(101), pds); err != nil {
 		t.Error(err)
 	}
-	if err = pk.VerifyDecryption(cypher.C, b(100), pds); err == nil {
+	if err = pk.VerifyDecryption(ct.C, b(100), pds); err == nil {
 		t.Error(err)
 	}
-	if err = pk.VerifyDecryption(new(big.Int).Add(b(1), cypher.C), b(101), pds); err == nil {
+	if err = pk.VerifyDecryption(new(big.Int).Add(b(1), ct.C), b(101), pds); err == nil {
 		t.Error(err)
 	}
 }

@@ -32,33 +32,33 @@ func TestComputePhi(t *testing.T) {
 	}
 }
 
-func TestCreatePrivateKey(t *testing.T) {
+func TestCreateSecretKey(t *testing.T) {
 	p := big.NewInt(463)
 	q := big.NewInt(631)
 
-	privateKey := CreatePrivateKey(p, q)
+	sk := CreateSecretKey(p, q)
 
-	if privateKey.N.Cmp(big.NewInt(292153)) != 0 {
-		t.Errorf("Unexpected N PublicKey value [%v]", privateKey.N)
+	if sk.N.Cmp(big.NewInt(292153)) != 0 {
+		t.Errorf("Unexpected N PublicKey value [%v]", sk.N)
 	}
 
-	if privateKey.Lambda.Cmp(big.NewInt(291060)) != 0 {
-		t.Errorf("Unexpected Lambda Public key value [%v]", privateKey.Lambda)
+	if sk.Lambda.Cmp(big.NewInt(291060)) != 0 {
+		t.Errorf("Unexpected Lambda Public key value [%v]", sk.Lambda)
 	}
 }
 
 func TestEncryptDecryptSmall(t *testing.T) {
-	p := big.NewInt(13)
-	q := big.NewInt(11)
-	for i := 1; i < 10; i++ {
-		privateKey := CreatePrivateKey(p, q)
+	for i := 1; i < 100; i++ {
+
+		p, q := GenKeyPrimes(10)
+		sk := CreateSecretKey(p, q)
 
 		initialValue := big.NewInt(100)
-		cypher, err := privateKey.Encrypt(initialValue, rand.Reader)
+		ct, err := sk.Encrypt(initialValue, rand.Reader)
 		if err != nil {
 			t.Error(err)
 		}
-		returnedValue := privateKey.Decrypt(cypher)
+		returnedValue := sk.Decrypt(ct)
 		if initialValue.Cmp(returnedValue) != 0 {
 			t.Error("wrong decryption ", returnedValue, " is not ", initialValue)
 		}
@@ -70,7 +70,7 @@ func TestCheckPlaintextSpace(t *testing.T) {
 	q := big.NewInt(11)
 
 	// N = pq = 143 so the plaintext space is [0, 143)
-	privateKey := CreatePrivateKey(p, q)
+	sk := CreateSecretKey(p, q)
 
 	var tests = map[string]struct {
 		plaintext     *big.Int
@@ -101,7 +101,7 @@ func TestCheckPlaintextSpace(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			cypher, err := privateKey.Encrypt(test.plaintext, rand.Reader)
+			ct, err := sk.Encrypt(test.plaintext, rand.Reader)
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Errorf(
 					"Unexpected error\nExpected: %v\nActual: %v",
@@ -111,7 +111,7 @@ func TestCheckPlaintextSpace(t *testing.T) {
 			}
 
 			if test.expectedError == nil {
-				decrypted := privateKey.Decrypt(cypher)
+				decrypted := sk.Decrypt(ct)
 				if test.plaintext.Cmp(decrypted) != 0 {
 					t.Errorf(
 						"Unexpected decryption\nExpected: %v\nActual: %v",
@@ -124,45 +124,47 @@ func TestCheckPlaintextSpace(t *testing.T) {
 	}
 }
 
-func TestAddCyphers(t *testing.T) {
-	privateKey := CreatePrivateKey(big.NewInt(17), big.NewInt(13))
+func TestAddCiphertexts(t *testing.T) {
+	p, q := GenKeyPrimes(10)
+	sk := CreateSecretKey(p, q)
 
-	cypher1, _ := privateKey.Encrypt(big.NewInt(5), rand.Reader)
-	cypher2, _ := privateKey.Encrypt(big.NewInt(6), rand.Reader)
-	cypher3, _ := privateKey.Encrypt(big.NewInt(7), rand.Reader)
-	cypher4, _ := privateKey.Encrypt(big.NewInt(8), rand.Reader)
-	cypher5 := privateKey.Add(cypher1, cypher2, cypher3, cypher4)
+	ct1, _ := sk.Encrypt(big.NewInt(5), rand.Reader)
+	ct2, _ := sk.Encrypt(big.NewInt(6), rand.Reader)
+	ct3, _ := sk.Encrypt(big.NewInt(7), rand.Reader)
+	ct4, _ := sk.Encrypt(big.NewInt(8), rand.Reader)
+	ct5 := sk.Add(ct1, ct2, ct3, ct4)
 
-	m := privateKey.Decrypt(cypher5)
+	m := sk.Decrypt(ct5)
 	if m.Cmp(big.NewInt(26)) != 0 {
 		t.Errorf("Unexpected decrypted value [%v]", m)
 	}
 }
 
-func TestAddCypherWithSmallKeyModulus(t *testing.T) {
-	privateKey := CreatePrivateKey(big.NewInt(7), big.NewInt(5))
+func TestAddCiphertextWithSmallKeyModulus(t *testing.T) {
+	sk := CreateSecretKey(big.NewInt(7), big.NewInt(5))
 
-	cypher1, _ := privateKey.Encrypt(big.NewInt(30), rand.Reader)
-	cypher2, _ := privateKey.Encrypt(big.NewInt(25), rand.Reader)
-	cypher3, _ := privateKey.Encrypt(big.NewInt(11), rand.Reader)
-	cypher4 := privateKey.Add(cypher1, cypher2, cypher3)
+	ct1, _ := sk.Encrypt(big.NewInt(30), rand.Reader)
+	ct2, _ := sk.Encrypt(big.NewInt(25), rand.Reader)
+	ct3, _ := sk.Encrypt(big.NewInt(11), rand.Reader)
+	ct4 := sk.Add(ct1, ct2, ct3)
 
-	m := privateKey.Decrypt(cypher4)
+	m := sk.Decrypt(ct4)
 	if m.Cmp(big.NewInt(31)) != 0 {
 		t.Errorf("Unexpected decrypted value [%v]", m)
 	}
 }
 
-func TestMulCypher(t *testing.T) {
-	privateKey := CreatePrivateKey(big.NewInt(17), big.NewInt(13))
+func TestMulCiphertext(t *testing.T) {
+	p, q := GenKeyPrimes(10)
+	sk := CreateSecretKey(p, q)
 
-	cypher, err := privateKey.Encrypt(big.NewInt(3), rand.Reader)
+	ct, err := sk.Encrypt(big.NewInt(3), rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cypherMultiple := privateKey.Mul(cypher, big.NewInt(7))
-	multiple := privateKey.Decrypt(cypherMultiple)
+	ctMultiple := sk.Mul(ct, big.NewInt(7))
+	multiple := sk.Decrypt(ctMultiple)
 
 	// 3 * 7 = 21
 	if multiple.Cmp(big.NewInt(21)) != 0 {
@@ -170,19 +172,37 @@ func TestMulCypher(t *testing.T) {
 	}
 }
 
-func TestMulCypherWithSmallKeyModulus(t *testing.T) {
-	privateKey := CreatePrivateKey(big.NewInt(7), big.NewInt(5))
+func TestMulCiphertextWithSmallKeyModulus(t *testing.T) {
+	sk := CreateSecretKey(big.NewInt(7), big.NewInt(5))
 
-	cypher, err := privateKey.Encrypt(big.NewInt(30), rand.Reader)
+	ct, err := sk.Encrypt(big.NewInt(30), rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cypherMultiple := privateKey.Mul(cypher, big.NewInt(93))
-	multiple := privateKey.Decrypt(cypherMultiple)
+	ctMultiple := sk.Mul(ct, big.NewInt(93))
+	multiple := sk.Decrypt(ctMultiple)
 
 	// (30*93) mod (7*5) = 25
 	if multiple.Cmp(big.NewInt(25)) != 0 {
 		t.Errorf("Unexpected decrypted value [%v]", multiple)
 	}
+}
+
+func GenKeyPrimes(bits int) (p, q *big.Int) {
+	var err error
+	for {
+		p, err = rand.Prime(rand.Reader, bits)
+		if err != nil {
+			continue
+		}
+		q, err = rand.Prime(rand.Reader, bits)
+		if err != nil || p.Cmp(q) == 0 {
+			continue
+		}
+
+		break
+	}
+
+	return p, q
 }

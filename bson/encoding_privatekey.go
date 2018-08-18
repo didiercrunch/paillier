@@ -7,65 +7,65 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type SerializablePrivateKey paillier.PrivateKey
+type SerializableSecretKey paillier.SecretKey
 
-// Serializes PrivateKey to BSON
-func SerializePrivateKey(key *paillier.PrivateKey) ([]byte, error) {
-	return bson.Marshal(toSerializablePrivateKey(key))
+// Serializes SecretKey to BSON
+func SerializeSecretKey(key *paillier.SecretKey) ([]byte, error) {
+	return bson.Marshal(toSerializableSecretKey(key))
 }
 
-// Deserializes BSON to PrivateKey
-func DeserializePrivateKey(data []byte) (*paillier.PrivateKey, error) {
-	serializable := new(SerializablePrivateKey)
+// Deserializes BSON to SecretKey
+func DeserializeSecretKey(data []byte) (*paillier.SecretKey, error) {
+	serializable := new(SerializableSecretKey)
 	if err := bson.Unmarshal(data, serializable); err != nil {
 		return nil, err
 	}
 
-	return toOriginalPrivateKey(serializable), nil
+	return toOriginalSecretKey(serializable), nil
 }
 
-func toSerializablePrivateKey(key *paillier.PrivateKey) *SerializablePrivateKey {
-	serializable := SerializablePrivateKey(*key)
+func toSerializableSecretKey(key *paillier.SecretKey) *SerializableSecretKey {
+	serializable := SerializableSecretKey(*key)
 	return &serializable
 }
 
-func toOriginalPrivateKey(serializable *SerializablePrivateKey) *paillier.PrivateKey {
-	original := paillier.PrivateKey(*serializable)
+func toOriginalSecretKey(serializable *SerializableSecretKey) *paillier.SecretKey {
+	original := paillier.SecretKey(*serializable)
 	return &original
 }
 
-type dbPrivateKey struct {
+type dbSecretKey struct {
 	N      string `bson:",omitempty"`
 	Lambda string `bson:",omitempty"`
 	Mu     string `bson:",omitempty"`
 }
 
-func (privateKey *SerializablePrivateKey) GetBSON() (interface{}, error) {
+func (SecretKey *SerializableSecretKey) GetBSON() (interface{}, error) {
 	m := make(map[string]string)
 
-	if privateKey.N != nil {
-		m["n"] = fmt.Sprintf("%x", privateKey.N)
+	if SecretKey.N != nil {
+		m["n"] = fmt.Sprintf("%x", SecretKey.N)
 	}
-	if privateKey.Lambda != nil {
-		m["lambda"] = fmt.Sprintf("%x", privateKey.Lambda)
+	if SecretKey.Lambda != nil {
+		m["lambda"] = fmt.Sprintf("%x", SecretKey.Lambda)
 	}
 	return m, nil
 }
 
-func (privateKey *SerializablePrivateKey) SetBSON(raw bson.Raw) error {
+func (SecretKey *SerializableSecretKey) SetBSON(raw bson.Raw) error {
 	var err error = nil
-	c := new(dbPrivateKey)
+	c := new(dbSecretKey)
 	raw.Unmarshal(c)
 
 	if c.N != "" {
-		privateKey.N, err = fromHex(c.N)
+		SecretKey.N, err = fromHex(c.N)
 		if err != nil {
 			return err
 		}
 	}
 
 	if c.Lambda != "" {
-		privateKey.Lambda, err = fromHex(c.Lambda)
+		SecretKey.Lambda, err = fromHex(c.Lambda)
 		if err != nil {
 			return err
 		}

@@ -7,20 +7,20 @@ import (
 	"github.com/keep-network/paillier"
 )
 
-func TestPrivateKeyBsonSerialization(t *testing.T) {
-	key := &paillier.PrivateKey{
+func TestSecretKeyBsonSerialization(t *testing.T) {
+	key := &paillier.SecretKey{
 		PublicKey: paillier.PublicKey{
 			N: (b(345)),
 		},
 		Lambda: b(5),
 	}
 
-	serialized, err := SerializePrivateKey(key)
+	serialized, err := SerializeSecretKey(key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	deserialized, err := DeserializePrivateKey(serialized)
+	deserialized, err := DeserializeSecretKey(serialized)
 	if err != nil {
 		t.Fatal(err)
 	}
