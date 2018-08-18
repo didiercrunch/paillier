@@ -171,7 +171,7 @@ func (tk *ThresholdPublicKey) VerifyDecryption(encryptedMessage, decryptedMessag
 	return nil
 }
 
-// Private key for a threshold Paillier scheme. Holds private information
+// Private key for a threshold Paillier scheme. Holds skate information
 // for the given decryption server.
 // `Id` is the unique identifier of a decryption server and `Share` is a secret
 // share generated from hiding polynomial and is used for a partial share decryption.

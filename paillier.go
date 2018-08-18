@@ -115,10 +115,10 @@ type SecretKey struct {
 // D(c) = [ ((c^lambda) mod N^2) - 1) / N ] lambda^-1 mod N
 //
 // See [KL 08] construction 11.32, page 414.
-func (priv *SecretKey) Decrypt(cypher *Cypher) (msg *big.Int) {
-	mu := new(big.Int).ModInverse(priv.Lambda, priv.N)
-	tmp := new(big.Int).Exp(cypher.C, priv.Lambda, priv.GetNSquare())
-	msg = new(big.Int).Mod(new(big.Int).Mul(L(tmp, priv.N), mu), priv.N)
+func (sk *SecretKey) Decrypt(cypher *Cypher) (msg *big.Int) {
+	mu := new(big.Int).ModInverse(sk.Lambda, sk.N)
+	tmp := new(big.Int).Exp(cypher.C, sk.Lambda, sk.GetNSquare())
+	msg = new(big.Int).Mod(new(big.Int).Mul(L(tmp, sk.N), mu), sk.N)
 	return
 }
 
@@ -143,12 +143,12 @@ func computePhi(p, q *big.Int) *big.Int {
 	return new(big.Int).Mul(minusOne(p), minusOne(q))
 }
 
-// CreateSecretKey generates a Paillier private key accepting two large prime
+// CreateSecretKey generates a Paillier skate key accepting two large prime
 // numbers of equal length or other such that gcd(pq, (p-1)(q-1)) = 1.
 //
 // Algorithm is based on approach described in [KL 08], construction 11.32,
 // page 414 which is compatible with one described in [DJN 10], section 3.2
-// except that instead of generating Lambda private key component from LCM
+// except that instead of generating Lambda skate key component from LCM
 // of p and q we use Euler's totient function as suggested in [KL 08].
 //
 //     [KL 08]:  Jonathan Katz, Yehuda Lindell, (2008)
