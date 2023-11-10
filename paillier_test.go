@@ -65,6 +65,35 @@ func TestEncryptDecryptSmall(t *testing.T) {
 	}
 }
 
+func TestEncrypt512(t *testing.T) {
+	p, _ := rand.Prime(rand.Reader, 512)
+	q, _ := rand.Prime(rand.Reader, 512)
+	privateKey := CreatePrivateKey(p, q)
+
+	for i := 1; i < 10; i++ {
+		initialValue, _ := rand.Int(rand.Reader, privateKey.PublicKey.N)
+		cypher, err := privateKey.Encrypt(initialValue, rand.Reader)
+		if err != nil {
+			t.Error(err)
+		}
+		returnedValue := privateKey.Decrypt(cypher)
+		if initialValue.Cmp(returnedValue) != 0 {
+			t.Error("wrong decryption ", returnedValue, " is not ", initialValue)
+		}
+	}
+}
+
+func BenchmarkEncrypt(b *testing.B) {
+	p, _ := rand.Prime(rand.Reader, 2048)
+	q, _ := rand.Prime(rand.Reader, 2048)
+	privateKey := CreatePrivateKey(p, q)
+	// run the Encrypt function b.N times
+	for n := 0; n < b.N; n++ {
+		initialValue, _ := rand.Int(rand.Reader, privateKey.PublicKey.N)
+		privateKey.Encrypt(initialValue, rand.Reader)
+	}
+}
+
 func TestCheckPlaintextSpace(t *testing.T) {
 	p := big.NewInt(13)
 	q := big.NewInt(11)
