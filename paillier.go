@@ -39,10 +39,11 @@ func (pk *PublicKey) EncryptWithR(m *big.Int, r *big.Int) (*Cypher, error) {
 	nSquare := pk.GetNSquare()
 
 	// g is _always_ equal n+1
+	// g^m = (n+1)^m = 1 + mn
 	// Threshold encryption is safe only for g=n+1 choice.
 	// See [DJN 10], section 5.1
-	g := new(big.Int).Add(pk.N, big.NewInt(1))
-	gm := new(big.Int).Exp(g, m, nSquare)
+	gm := new(big.Int).Mul(pk.N, m)
+	gm = gm.Mod(new(big.Int).Add(gm, big.NewInt(1)), nSquare)
 	rn := new(big.Int).Exp(r, pk.N, nSquare)
 	return &Cypher{new(big.Int).Mod(new(big.Int).Mul(rn, gm), nSquare)}, nil
 }
@@ -151,14 +152,14 @@ func computePhi(p, q *big.Int) *big.Int {
 // except that instead of generating Lambda private key component from LCM
 // of p and q we use Euler's totient function as suggested in [KL 08].
 //
-//     [KL 08]:  Jonathan Katz, Yehuda Lindell, (2008)
-//               Introduction to Modern Cryptography: Principles and Protocols,
-//               Chapman & Hall/CRC
+//	[KL 08]:  Jonathan Katz, Yehuda Lindell, (2008)
+//	          Introduction to Modern Cryptography: Principles and Protocols,
+//	          Chapman & Hall/CRC
 //
-//     [DJN 10]: Ivan Damgard, Mads Jurik, Jesper Buus Nielsen, (2010)
-//               A Generalization of Paillier’s Public-Key System
-//               with Applications to Electronic Voting
-//               Aarhus University, Dept. of Computer Science, BRICS
+//	[DJN 10]: Ivan Damgard, Mads Jurik, Jesper Buus Nielsen, (2010)
+//	          A Generalization of Paillier’s Public-Key System
+//	          with Applications to Electronic Voting
+//	          Aarhus University, Dept. of Computer Science, BRICS
 func CreatePrivateKey(p, q *big.Int) *PrivateKey {
 	n := new(big.Int).Mul(p, q)
 	lambda := computePhi(p, q)
